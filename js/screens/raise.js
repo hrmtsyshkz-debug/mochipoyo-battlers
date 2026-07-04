@@ -123,6 +123,8 @@ function renderDetail(navigate) {
       ${evolveSectionHtml}
       <h3>ごはんを あげる</h3>
       <div class="food-grid" id="food-grid"></div>
+      <h3>かいふくアイテム</h3>
+      <div class="food-grid" id="heal-grid"></div>
     </div>
   `;
 
@@ -157,6 +159,42 @@ function renderDetail(navigate) {
     btn.addEventListener("click", () => feedItem(item, instance, navigate));
     foodGrid.appendChild(btn);
   });
+
+  const healGrid = wrap.querySelector("#heal-grid");
+  const healItems = items.filter((item) => item.type === "heal");
+  const hpFull = instance.currentHp >= instance.stats.hp;
+  healItems.forEach((item) => {
+    const count = getItemCount(item.id);
+    const btn = document.createElement("button");
+    btn.className = "food-btn";
+    btn.disabled = count <= 0 || hpFull;
+    btn.innerHTML = `
+      <span class="food-emoji">${item.id === "big_poyo_potion" ? "🧃" : "🥤"}</span>
+      <span class="food-info">
+        ${item.name}<br/>
+        <span class="food-count">HP+${item.healAmount} / のこり${count}こ${hpFull ? "（HPまんたん）" : ""}</span>
+      </span>
+    `;
+    btn.addEventListener("click", () => useHealItem(item, instance, navigate));
+    healGrid.appendChild(btn);
+  });
+}
+
+function useHealItem(item, instance, navigate) {
+  if (instance.currentHp >= instance.stats.hp) {
+    showToast("HPは まんたんだよ！");
+    return;
+  }
+  const success = useItem(item.id);
+  if (!success) {
+    showToast("アイテムが たりないよ！");
+    return;
+  }
+  const before = Math.max(0, instance.currentHp);
+  instance.currentHp = Math.min(instance.stats.hp, before + item.healAmount);
+  showToast(`${instance.nickname}の HPが ${instance.currentHp - before} かいふくした！`);
+  saveGame();
+  renderRaise(navigate);
 }
 
 function statLabel(key) {
