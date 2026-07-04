@@ -311,8 +311,7 @@ img.monster-img {
 .monster-full-art img {
   display: block;
   width: 100%;
-  aspect-ratio: 2 / 3;
-  object-fit: cover;
+  height: auto; /* 縦長・横長どちらの納品アートもそのままの比率で見せる */
 }
 
 .monster-name {
