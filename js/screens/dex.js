@@ -3,6 +3,11 @@ import { monsters } from "../../data/monsters.js";
 import { getDexEntry } from "../state.js";
 import { monsterAvatarHtml, monsterFullArtHtml, rarityLabel } from "../ui.js";
 
+// 図鑑番号はデータのdexNoを正とする（未定義ならidから生成）
+function dexNoOf(master) {
+  return master.dexNo || String(master.id).padStart(3, "0");
+}
+
 export function renderDex(navigate) {
   const screen = document.getElementById("screen-dex");
 
@@ -30,7 +35,7 @@ export function renderDex(navigate) {
     cell.innerHTML = `
       ${monsterAvatarHtml(m, { silhouette: !entry.seen })}
       <div class="monster-name">${entry.seen ? m.name : "？？？"}</div>
-      <div class="monster-level">${entry.seen ? `No.${String(m.id).padStart(3, "0")}` : "No.???"}</div>
+      <div class="monster-level">${entry.seen ? `No.${dexNoOf(m)}` : "No.???"}</div>
     `;
     cell.addEventListener("click", () => showDetail(m, entry));
     grid.appendChild(cell);
@@ -55,7 +60,7 @@ function showDetail(master, entry) {
     detail.innerHTML = `
       <div class="raise-detail" style="margin-top:16px;">
         ${monsterAvatarHtml(master)}
-        <h2>No.${String(master.id).padStart(3, "0")} ${master.name}</h2>
+        <h2>No.${dexNoOf(master)} ${master.name}</h2>
         <p>くわしい じょうほうは つかまえると とうろくされるよ。</p>
       </div>
     `;
@@ -66,13 +71,13 @@ function showDetail(master, entry) {
   const bestStage = entry.evolved && typeof entry.evolvedStage === "number" ? entry.evolvedStage : 0;
   const dexForm =
     Array.isArray(master.forms) && master.forms.length > 0
-      ? master.forms.find((f) => f.stage === bestStage) || master.forms[0]
+      ? master.forms.find((f) => f.evolutionStage === bestStage) || master.forms[0]
       : null;
 
   detail.innerHTML = `
     <div class="raise-detail" style="margin-top:16px;">
       ${monsterFullArtHtml(master, dexForm)}
-      <h2>No.${String(master.id).padStart(3, "0")} ${master.name}${entry.evolved ? `（${entry.evolvedName}）` : ""}</h2>
+      <h2>No.${dexNoOf(master)} ${master.name}${entry.evolved ? `（${entry.evolvedName}）` : ""}</h2>
       <p>属性: ${master.element.join(" / ")}　分類: ${master.classification}</p>
       <p>レア度: ${rarityLabel(master.rarity)}　好物: ${master.favoriteFood}</p>
       <p>生息地: ${master.habitat.join(" / ")}</p>

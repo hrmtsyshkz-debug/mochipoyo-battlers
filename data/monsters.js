@@ -1,9 +1,10 @@
 // モンスターデータ（仕様書 v0.2 準拠、20体）
-// forms: 進化形態の配列。stage 0 が基本形態。conditionLevel はその形態になれるレベル（stage 0 は null）。
+// forms: 進化形態の配列。evolutionStage 0 が基本形態。conditionLevel はその形態になれるレベル（stage 0 は null）。
 // images.icon / images.full は納品済みパスのみ設定し、未納品は null（ui.js側でフォールバックする）。
 export const monsters = [
   {
     id: 1,
+    dexNo: '001',
     name: 'ポヨリン',
     element: ['甘味'],
     role: 'バランス',
@@ -27,7 +28,7 @@ export const monsters = [
       {
         formId: 'poyorin',
         name: 'ポヨリン',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: {
           icon: 'assets/monsters/icon/001_poyorin.png',
@@ -37,7 +38,7 @@ export const monsters = [
       {
         formId: 'poyorina',
         name: 'ポヨリーナ',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 8,
         images: {
           icon: null,
@@ -50,6 +51,7 @@ export const monsters = [
   },
   {
     id: 2,
+    dexNo: '002',
     name: 'ラーメルン',
     element: ['炭水'],
     role: '耐久',
@@ -73,7 +75,7 @@ export const monsters = [
       {
         formId: 'ramerun',
         name: 'ラーメルン',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: {
           icon: 'assets/monsters/icon/002_ramerun.png',
@@ -83,7 +85,7 @@ export const monsters = [
       {
         formId: 'ramerurna',
         name: 'ラメルーナ',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 8,
         images: {
           icon: null,
@@ -96,6 +98,7 @@ export const monsters = [
   },
   {
     id: 3,
+    dexNo: '003',
     name: 'カラアゲポヨ',
     element: ['肉', '油'],
     role: '攻撃',
@@ -119,7 +122,7 @@ export const monsters = [
       {
         formId: 'karaagepoyo',
         name: 'カラアゲポヨ',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: {
           icon: 'assets/monsters/icon/003_karaagepoyo.png',
@@ -129,7 +132,7 @@ export const monsters = [
       {
         formId: 'agepoyon',
         name: 'アゲポヨン',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 8,
         images: {
           icon: null,
@@ -139,7 +142,7 @@ export const monsters = [
       {
         formId: 'kararina',
         name: 'カラリーナ',
-        stage: 2,
+        evolutionStage: 2,
         conditionLevel: 16,
         images: {
           icon: 'assets/monsters/icon/003_kararina.png',
@@ -152,6 +155,7 @@ export const monsters = [
   },
   {
     id: 4,
+    dexNo: '004',
     name: 'モチーナ',
     element: ['和食', '甘味'],
     role: '防御',
@@ -175,14 +179,14 @@ export const monsters = [
       {
         formId: 'mochina',
         name: 'モチーナ',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'mochimochina',
         name: 'モチモチーナ',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 10,
         images: { icon: null, full: null },
       },
@@ -192,6 +196,7 @@ export const monsters = [
   },
   {
     id: 5,
+    dexNo: '005',
     name: 'マシュメル',
     element: ['甘味', '乳製'],
     role: '回復',
@@ -215,14 +220,14 @@ export const monsters = [
       {
         formId: 'mashumel',
         name: 'マシュメル',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'mashumelun',
         name: 'マシュメルン',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 10,
         images: { icon: null, full: null },
       },
@@ -232,6 +237,7 @@ export const monsters = [
   },
   {
     id: 6,
+    dexNo: '006',
     name: 'ポテトッチ',
     element: ['ジャンク', '油'],
     role: '攻撃',
@@ -255,14 +261,14 @@ export const monsters = [
       {
         formId: 'potetocchi',
         name: 'ポテトッチ',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'potetoccha',
         name: 'ポテトッチャ',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 10,
         images: { icon: null, full: null },
       },
@@ -272,6 +278,7 @@ export const monsters = [
   },
   {
     id: 7,
+    dexNo: '007',
     name: 'タコヤキュン',
     element: ['和食', '油'],
     role: 'バランス',
@@ -295,14 +302,14 @@ export const monsters = [
       {
         formId: 'takoyakyun',
         name: 'タコヤキュン',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'takoyaking',
         name: 'タコヤキング',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 10,
         images: { icon: null, full: null },
       },
@@ -312,6 +319,7 @@ export const monsters = [
   },
   {
     id: 8,
+    dexNo: '008',
     name: 'クリーミア',
     element: ['乳製'],
     role: '回復',
@@ -335,14 +343,14 @@ export const monsters = [
       {
         formId: 'creamia',
         name: 'クリーミア',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'creamium',
         name: 'クリーミアム',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 11,
         images: { icon: null, full: null },
       },
@@ -352,6 +360,7 @@ export const monsters = [
   },
   {
     id: 9,
+    dexNo: '009',
     name: 'チョコラミ',
     element: ['甘味'],
     role: '特殊攻撃',
@@ -375,14 +384,14 @@ export const monsters = [
       {
         formId: 'chocorami',
         name: 'チョコラミ',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'chocoramia',
         name: 'チョコラミア',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 11,
         images: { icon: null, full: null },
       },
@@ -392,6 +401,7 @@ export const monsters = [
   },
   {
     id: 10,
+    dexNo: '010',
     name: 'ウドンフワ',
     element: ['炭水', '和食'],
     role: '耐久',
@@ -415,14 +425,14 @@ export const monsters = [
       {
         formId: 'udonfuwa',
         name: 'ウドンフワ',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'udonfuwari',
         name: 'ウドンフワリ',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 11,
         images: { icon: null, full: null },
       },
@@ -432,6 +442,7 @@ export const monsters = [
   },
   {
     id: 11,
+    dexNo: '011',
     name: 'カレーコロリン',
     element: ['激辛', '炭水'],
     role: '攻撃',
@@ -455,14 +466,14 @@ export const monsters = [
       {
         formId: 'currycororin',
         name: 'カレーコロリン',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'curryrolling',
         name: 'カレーローリング',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 12,
         images: { icon: null, full: null },
       },
@@ -472,6 +483,7 @@ export const monsters = [
   },
   {
     id: 12,
+    dexNo: '012',
     name: 'ハンバグミー',
     element: ['肉'],
     role: '攻撃',
@@ -495,14 +507,14 @@ export const monsters = [
       {
         formId: 'hambagumy',
         name: 'ハンバグミー',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'hambagrande',
         name: 'ハンバグランデ',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 12,
         images: { icon: null, full: null },
       },
@@ -512,6 +524,7 @@ export const monsters = [
   },
   {
     id: 13,
+    dexNo: '013',
     name: 'アンミツネ',
     element: ['和食', '甘味'],
     role: 'かわいさ特化',
@@ -535,14 +548,14 @@ export const monsters = [
       {
         formId: 'anmitsune',
         name: 'アンミツネ',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'anmitsuneko',
         name: 'アンミツネコ',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 12,
         images: { icon: null, full: null },
       },
@@ -552,6 +565,7 @@ export const monsters = [
   },
   {
     id: 14,
+    dexNo: '014',
     name: 'ミルクラ',
     element: ['乳製'],
     role: '防御/回復',
@@ -575,14 +589,14 @@ export const monsters = [
       {
         formId: 'milkura',
         name: 'ミルクラ',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'milkurara',
         name: 'ミルクララ',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 12,
         images: { icon: null, full: null },
       },
@@ -592,6 +606,7 @@ export const monsters = [
   },
   {
     id: 15,
+    dexNo: '015',
     name: 'ドーナツン',
     element: ['甘味', '油'],
     role: 'トリッキー',
@@ -615,14 +630,14 @@ export const monsters = [
       {
         formId: 'donutsun',
         name: 'ドーナツン',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'donutsia',
         name: 'ドーナツィア',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 13,
         images: { icon: null, full: null },
       },
@@ -632,6 +647,7 @@ export const monsters = [
   },
   {
     id: 16,
+    dexNo: '016',
     name: 'コンビニャ',
     element: ['ジャンク'],
     role: 'アイテム型',
@@ -655,14 +671,14 @@ export const monsters = [
       {
         formId: 'conbinya',
         name: 'コンビニャ',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'conbinyan',
         name: 'コンビニャン',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 14,
         images: { icon: null, full: null },
       },
@@ -672,6 +688,7 @@ export const monsters = [
   },
   {
     id: 17,
+    dexNo: '017',
     name: 'チーズモコ',
     element: ['乳製', '油'],
     role: '防御',
@@ -695,14 +712,14 @@ export const monsters = [
       {
         formId: 'cheesemoco',
         name: 'チーズモコ',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'cheesemocomoco',
         name: 'チーズモコモコ',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 14,
         images: { icon: null, full: null },
       },
@@ -712,6 +729,7 @@ export const monsters = [
   },
   {
     id: 18,
+    dexNo: '018',
     name: 'パフェリア',
     element: ['甘味', '乳製'],
     role: '回復/魅了',
@@ -735,14 +753,14 @@ export const monsters = [
       {
         formId: 'parferia',
         name: 'パフェリア',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'parferianne',
         name: 'パフェリアーヌ',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 14,
         images: { icon: null, full: null },
       },
@@ -752,6 +770,7 @@ export const monsters = [
   },
   {
     id: 19,
+    dexNo: '019',
     name: 'ヤキニクマル',
     element: ['肉', '油'],
     role: '高火力',
@@ -775,14 +794,14 @@ export const monsters = [
       {
         formId: 'yakinikumaru',
         name: 'ヤキニクマル',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },
       {
         formId: 'yakinikudon',
         name: 'ヤキニクドン',
-        stage: 1,
+        evolutionStage: 1,
         conditionLevel: 16,
         images: { icon: null, full: null },
       },
@@ -792,6 +811,7 @@ export const monsters = [
   },
   {
     id: 20,
+    dexNo: '020',
     name: 'ビュッフェリア',
     element: ['甘味', '炭水', '肉', '油', '乳製'],
     role: 'ボス/伝説',
@@ -815,7 +835,7 @@ export const monsters = [
       {
         formId: 'buffeteria',
         name: 'ビュッフェリア',
-        stage: 0,
+        evolutionStage: 0,
         conditionLevel: null,
         images: { icon: null, full: null },
       },

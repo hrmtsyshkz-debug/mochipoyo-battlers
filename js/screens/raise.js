@@ -94,7 +94,7 @@ function renderDetail(navigate) {
   const evolvable = canEvolve(instance);
   const currentForm = getFormForInstance(master, instance);
   const currentStage = instance.evolutionStage || 0;
-  const nextForm = Array.isArray(master.forms) ? master.forms.find((f) => f.stage === currentStage + 1) : null;
+  const nextForm = Array.isArray(master.forms) ? master.forms.find((f) => f.evolutionStage === currentStage + 1) : null;
 
   let evolveSectionHtml = "";
   if (nextForm) {

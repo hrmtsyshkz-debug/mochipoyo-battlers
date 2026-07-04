@@ -169,7 +169,7 @@ export function getFormForInstance(master, instance) {
   const stage = instance && typeof instance.evolutionStage === "number" ? instance.evolutionStage : 0;
   const clampedStage = Math.max(0, Math.min(stage, master.forms.length - 1));
   return (
-    master.forms.find((f) => f.stage === clampedStage) || master.forms[clampedStage] || master.forms[0]
+    master.forms.find((f) => f.evolutionStage === clampedStage) || master.forms[clampedStage] || master.forms[0]
   );
 }
 
@@ -326,7 +326,7 @@ export function canEvolve(instance) {
   const master = getMonsterMaster(instance.monsterId);
   if (!master || !Array.isArray(master.forms)) return false;
   const currentStage = instance.evolutionStage || 0;
-  const nextForm = master.forms.find((f) => f.stage === currentStage + 1);
+  const nextForm = master.forms.find((f) => f.evolutionStage === currentStage + 1);
   if (!nextForm) return false;
   return instance.level >= nextForm.conditionLevel;
 }
@@ -336,7 +336,7 @@ export function evolveInstance(instance) {
   const master = getMonsterMaster(instance.monsterId);
   if (!master || !Array.isArray(master.forms)) return null;
   const currentStage = instance.evolutionStage || 0;
-  const nextForm = master.forms.find((f) => f.stage === currentStage + 1);
+  const nextForm = master.forms.find((f) => f.evolutionStage === currentStage + 1);
   if (!nextForm) return null;
 
   const evolvedName = nextForm.name;
@@ -348,7 +348,7 @@ export function evolveInstance(instance) {
   }
   instance.currentHp = Math.max(1, Math.round(instance.stats.hp * hpRatio));
   instance.nickname = evolvedName;
-  instance.evolutionStage = nextForm.stage;
+  instance.evolutionStage = nextForm.evolutionStage;
   instance.evolved = instance.evolutionStage > 0;
 
   // 図鑑に進化情報を記録（進化済みであることをdexエントリにも残す）
@@ -357,7 +357,7 @@ export function evolveInstance(instance) {
   if (entry) {
     entry.evolved = true;
     entry.evolvedName = evolvedName;
-    entry.evolvedStage = nextForm.stage;
+    entry.evolvedStage = nextForm.evolutionStage;
   }
 
   return { evolvedName, master, form: nextForm };

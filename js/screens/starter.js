@@ -19,7 +19,7 @@ export function renderStarter(navigate) {
   starters.forEach((master) => {
     const card = document.createElement("div");
     card.className = "starter-card";
-    const baseForm = Array.isArray(master.forms) ? master.forms.find((f) => f.stage === 0) : null;
+    const baseForm = Array.isArray(master.forms) ? master.forms.find((f) => f.evolutionStage === 0) : null;
     card.innerHTML = `
       ${monsterAvatarHtml(master, { large: true, form: baseForm })}
       <div class="monster-name">${master.name}</div>

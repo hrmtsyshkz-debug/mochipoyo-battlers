@@ -116,7 +116,7 @@ function startExploration(stage, navigate, isBoss) {
     const level = isBoss ? Math.max(1, stage.recommendedLevel) : randomLevelAround(stage.recommendedLevel);
 
     const enemyBaseForm =
-      Array.isArray(enemyMaster.forms) ? enemyMaster.forms.find((f) => f.stage === 0) : null;
+      Array.isArray(enemyMaster.forms) ? enemyMaster.forms.find((f) => f.evolutionStage === 0) : null;
     log.innerHTML = `
       <div class="explore-emoji">${monsterImageInnerHtml(enemyMaster, enemyBaseForm, "icon")}</div>
       <p>${isBoss ? "ボスの " : "やせいの "}${enemyMaster.name}が あらわれた！</p>

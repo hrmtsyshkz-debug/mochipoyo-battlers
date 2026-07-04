@@ -65,7 +65,7 @@ export function monsterAvatarHtml(master, options = {}) {
   const classes = ["monster-avatar"];
   if (large) classes.push("large");
   if (silhouette) classes.push("silhouette");
-  const resolvedForm = form || (master && Array.isArray(master.forms) ? master.forms.find((f) => f.stage === 0) : null);
+  const resolvedForm = form || (master && Array.isArray(master.forms) ? master.forms.find((f) => f.evolutionStage === 0) : null);
   const inner = silhouette ? "？" : monsterImageInnerHtml(master, resolvedForm, "icon");
   return `<div class="${classes.join(" ")}">${inner}</div>`;
 }
@@ -82,7 +82,7 @@ window.__mochipoyoFullArtError = function (img) {
 // full系チェーンで画像が取れれば角丸の縦カード、無ければ従来の丸アバター+絵文字にフォールバック
 export function monsterFullArtHtml(master, form = null) {
   if (!master) return `<div class="monster-avatar large">❓</div>`;
-  const resolvedForm = form || (Array.isArray(master.forms) ? master.forms.find((f) => f.stage === 0) : null);
+  const resolvedForm = form || (Array.isArray(master.forms) ? master.forms.find((f) => f.evolutionStage === 0) : null);
   const src = resolveMonsterImage(master, resolvedForm, "full");
   const emoji = master.emoji || "❓";
   const fallbackAvatar = `<div class="monster-avatar large" style="display:none;">${emoji}</div>`;

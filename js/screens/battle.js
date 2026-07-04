@@ -81,7 +81,7 @@ export function renderBattle(navigate, params = {}) {
   });
 
   const playerForm = getFormForInstance(leader.master, leader.instance);
-  const enemyForm = Array.isArray(enemyMaster.forms) ? enemyMaster.forms.find((f) => f.stage === 0) : null;
+  const enemyForm = Array.isArray(enemyMaster.forms) ? enemyMaster.forms.find((f) => f.evolutionStage === 0) : null;
 
   battleState = {
     playerUnit,
