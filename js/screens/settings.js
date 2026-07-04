@@ -1,6 +1,7 @@
 // 設定画面
 import { getState, deleteSaveData, saveGame } from "../state.js";
 import { showToast } from "../ui.js";
+import { DEFAULT_TRAINER_NAME } from "../challenge.js";
 
 export function renderSettings(navigate) {
   const screen = document.getElementById("screen-settings");
@@ -10,6 +11,21 @@ export function renderSettings(navigate) {
     <div class="top-bar">
       <button class="back-btn" id="btn-back">← もどる</button>
       <h1 style="margin:0;">せってい</h1>
+    </div>
+
+    <div class="settings-row">
+      <div class="settings-label">
+        <div>トレーナーめい</div>
+        <div class="hint-text">チームきょうゆう時に あいてに 表示されるよ</div>
+      </div>
+      <input
+        type="text"
+        id="input-trainer-name"
+        class="text-input"
+        maxlength="12"
+        placeholder="${DEFAULT_TRAINER_NAME}"
+        value="${(state.player.name || "").replace(/"/g, "&quot;")}"
+      />
     </div>
 
     <div class="settings-row">
@@ -38,6 +54,13 @@ export function renderSettings(navigate) {
   `;
 
   screen.querySelector("#btn-back").addEventListener("click", () => navigate("home"));
+
+  screen.querySelector("#input-trainer-name").addEventListener("change", (e) => {
+    const value = e.target.value.slice(0, 12).trim();
+    state.player.name = value || DEFAULT_TRAINER_NAME;
+    e.target.value = state.player.name;
+    saveGame();
+  });
 
   screen.querySelector("#toggle-sound").addEventListener("change", (e) => {
     state.settings.sound = e.target.checked;

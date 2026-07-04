@@ -1,7 +1,8 @@
 // ホーム画面
 import { stages } from "../../data/stages.js";
 import { getState, getPartyWithMaster, canEvolve, reviveFaintedParty, saveGame, getFormForInstance } from "../state.js";
-import { monsterAvatarHtml, displayName } from "../ui.js";
+import { monsterAvatarHtml, displayName, escapeHtml } from "../ui.js";
+import { getPendingChallenge, clearPendingChallenge } from "../main.js";
 
 export function renderHome(navigate) {
   const screen = document.getElementById("screen-home");
@@ -14,6 +15,7 @@ export function renderHome(navigate) {
   const partyInfo = getPartyWithMaster();
   const unlockedStages = stages.filter((s) => isUnlocked(state, s));
   const evolvable = partyInfo.filter(({ instance }) => canEvolve(instance));
+  const challenge = getPendingChallenge();
 
   screen.innerHTML = `
     <div class="top-bar">
@@ -21,6 +23,14 @@ export function renderHome(navigate) {
       <div class="coin-display">🪙 <span id="home-gold">${state.player.gold}</span></div>
     </div>
     <p>きょうも もちぽよたちと げんきに いこう！</p>
+
+    ${
+      challenge
+        ? `<div class="challenge-banner" id="challenge-banner">⚔️ ${escapeHtml(
+            challenge.trainerName
+          )}さんから しょうぶの もうしこみ！</div>`
+        : ""
+    }
 
     ${
       evolvable.length > 0
@@ -87,10 +97,19 @@ export function renderHome(navigate) {
   screen.querySelector("#nav-raise").addEventListener("click", () => navigate("raise"));
   screen.querySelector("#nav-shop").addEventListener("click", () => navigate("shop"));
   screen.querySelector("#nav-settings").addEventListener("click", () => navigate("settings"));
-  screen.querySelector("#nav-party").addEventListener("click", () => navigate("raise"));
+  screen.querySelector("#nav-party").addEventListener("click", () => navigate("party"));
   const evolveBanner = screen.querySelector("#evolve-banner");
   if (evolveBanner) {
     evolveBanner.addEventListener("click", () => navigate("raise"));
+  }
+  const challengeBanner = screen.querySelector("#challenge-banner");
+  if (challengeBanner) {
+    challengeBanner.addEventListener("click", () => {
+      const c = getPendingChallenge();
+      if (!c) return;
+      clearPendingChallenge();
+      navigate("battle", { battleMode: "friend", friendChallenge: c });
+    });
   }
 }
 

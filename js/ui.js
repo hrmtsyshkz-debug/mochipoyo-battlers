@@ -1,6 +1,12 @@
 // 共通UIユーティリティ
 let toastTimer = null;
 
+// XSS対策: 外部由来の文字列(トレーナー名・ニックネーム等)をHTMLに挿入する前に必ず通す
+const ESCAPE_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+export function escapeHtml(str) {
+  return String(str == null ? "" : str).replace(/[&<>"']/g, (ch) => ESCAPE_MAP[ch]);
+}
+
 export function showToast(message, duration = 2000) {
   const toast = document.getElementById("toast");
   if (!toast) return;

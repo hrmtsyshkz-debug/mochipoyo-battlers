@@ -759,6 +759,10 @@ img.monster-img {
   gap: 6px;
 }
 
+.command-grid.command-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 .command-btn {
   background: var(--color-white);
   padding: 10px 4px;
@@ -900,4 +904,156 @@ img.monster-img {
 
 .toggle-switch input:checked + .toggle-slider::before {
   transform: translateX(20px);
+}
+
+.text-input {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 2px solid #f0dede;
+  color: var(--color-text);
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* ===== パーティへんせい画面 ===== */
+.party-slot-list,
+.box-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.party-slot-card {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.party-slot-card .monster-avatar {
+  margin: 0;
+  width: 52px;
+  height: 52px;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.party-slot-info {
+  flex: 1;
+  text-align: left;
+  min-width: 0;
+}
+
+.party-slot-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-mini {
+  background: var(--color-white);
+  border: 2px solid #ffe3ec;
+  color: var(--color-text);
+  padding: 8px 10px;
+  font-size: 11px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-soft);
+  white-space: nowrap;
+}
+
+.btn-mini:hover {
+  background: #fff0f5;
+}
+
+.btn-mini:disabled {
+  background: #f4efef;
+  color: #c9bcbc;
+  border-color: #f4efef;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-mini-danger {
+  color: var(--color-danger);
+  border-color: #ffd3d3;
+}
+
+.btn-mini-danger:hover {
+  background: #fff0f0;
+}
+
+/* ===== チーム共有オーバーレイ ===== */
+.share-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(107, 74, 74, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150;
+  padding: 20px;
+}
+
+.share-overlay.hidden {
+  display: none;
+}
+
+.share-card {
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 22px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+}
+
+.share-qr-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  margin: 12px 0;
+}
+
+.share-qr-wrap img {
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+}
+
+.share-url-box {
+  background: #fff7fa;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 11px;
+  word-break: break-all;
+  color: var(--color-text-light);
+  margin-bottom: 14px;
+  user-select: all;
+}
+
+/* ===== チャレンジバナー ===== */
+.challenge-banner {
+  background: linear-gradient(90deg, #ffd9d9, #ffe3ec);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  margin: 12px 0;
+  box-shadow: var(--shadow-soft);
+  cursor: pointer;
+  color: #c23b5a;
 }

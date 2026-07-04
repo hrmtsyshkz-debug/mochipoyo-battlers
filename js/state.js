@@ -184,6 +184,21 @@ function computeStatsAtLevel(master, level) {
   return stats;
 }
 
+// evolutionStage段分の進化ブースト(1.15倍/段)を複利で適用したレベル成長ステータスを計算する。
+// フレンドバトルの相手チーム再計算など、instanceを持たずmaster+level+stageのみから
+// チート防止のためステータスを導出したい場合に使う（createMonsterInstance/evolveInstanceとは別経路）。
+export function computeStatsForMasterAtLevelAndStage(master, level, evolutionStage) {
+  const stats = computeStatsAtLevel(master, level);
+  const EVOLUTION_BOOST = 1.15;
+  const stage = Math.max(0, evolutionStage || 0);
+  for (let i = 0; i < stage; i++) {
+    for (const key of ["hp", "poyoPower", "mochiDefense", "speed", "appetite", "charm"]) {
+      stats[key] = Math.round(stats[key] * EVOLUTION_BOOST);
+    }
+  }
+  return stats;
+}
+
 // パーティに追加。3体以上ならボックスへ。戻り値: { instance, wentToBox }
 export function addMonsterToPartyOrBox(monsterId, level = 1) {
   const instance = createMonsterInstance(monsterId, level);
@@ -413,4 +428,65 @@ export function reviveFaintedParty() {
     }
   });
   return revived;
+}
+
+// ---------- パーティ編成（並び替え・ボックス移動） ----------
+
+// パーティ内で1つ前（先頭側）に順序を上げる。既に先頭ならfalse。
+export function movePartyMemberUp(instanceId) {
+  const idx = state.party.findIndex((m) => m.instanceId === instanceId);
+  if (idx <= 0) return false;
+  const tmp = state.party[idx - 1];
+  state.party[idx - 1] = state.party[idx];
+  state.party[idx] = tmp;
+  return true;
+}
+
+// パーティの個体をボックスへ移動する。最後の1体は移動できない。
+export function moveToBox(instanceId) {
+  if (state.party.length <= 1) return false;
+  const idx = state.party.findIndex((m) => m.instanceId === instanceId);
+  if (idx === -1) return false;
+  const [instance] = state.party.splice(idx, 1);
+  state.box.push(instance);
+  return true;
+}
+
+// ボックスの個体をパーティへ移動する。パーティが3体のときは失敗する。
+export function moveToParty(instanceId) {
+  if (state.party.length >= 3) return false;
+  const idx = state.box.findIndex((m) => m.instanceId === instanceId);
+  if (idx === -1) return false;
+  const [instance] = state.box.splice(idx, 1);
+  state.party.push(instance);
+  return true;
+}
+
+// ---------- にがす（おわかれ） ----------
+
+const RELEASE_RARITY_BONUS = { S: 0, M: 10, L: 25, XL: 50, XXL: 80, LEGEND: 150 };
+
+// ボックスの個体を「にがす」。ゴールドとおみやげ(food)アイテムを1個獲得して除去する。
+// 戻り値: { goldGain, giftItem, name } または失敗時 null
+export function releaseFromBox(instanceId) {
+  const idx = state.box.findIndex((m) => m.instanceId === instanceId);
+  if (idx === -1) return null;
+  const instance = state.box[idx];
+  const master = getMonsterMaster(instance.monsterId);
+  const rarityBonus = master ? RELEASE_RARITY_BONUS[master.rarity] || 0 : 0;
+  const goldGain = 20 + instance.level * 8 + rarityBonus;
+
+  const foodItems = items.filter((i) => i.type === "food");
+  const giftItem =
+    foodItems.length > 0 ? foodItems[Math.floor(Math.random() * foodItems.length)] : null;
+
+  const name = instance.nickname || (master ? master.name : "？？？");
+
+  state.box.splice(idx, 1);
+  addGold(goldGain);
+  if (giftItem) {
+    addItem(giftItem.id, 1);
+  }
+
+  return { goldGain, giftItem, name };
 }

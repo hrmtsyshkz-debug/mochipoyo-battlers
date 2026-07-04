@@ -29,12 +29,19 @@ import {
   attemptCapture,
   attemptFlee,
 } from "../battle.js";
-import { showToast, displayName, monsterImageInnerHtml } from "../ui.js";
+import { showToast, displayName, monsterImageInnerHtml, escapeHtml } from "../ui.js";
 
-let battleState = null; // { playerUnit, enemyUnit, playerInstance, enemyMaster, stage, isBoss, isOver }
+let battleState = null; // { playerUnit, enemyUnit, playerInstance, enemyMaster, stage, isBoss, isOver, mode, ... }
 
 export function renderBattle(navigate, params = {}) {
   const screen = document.getElementById("screen-battle");
+  const battleMode = params.battleMode === "friend" ? "friend" : "wild";
+
+  if (battleMode === "friend") {
+    renderFriendBattleStart(navigate, screen, params);
+    return;
+  }
+
   const partyInfo = getPartyWithMaster();
 
   if (partyInfo.length === 0) {
@@ -84,6 +91,7 @@ export function renderBattle(navigate, params = {}) {
   const enemyForm = Array.isArray(enemyMaster.forms) ? enemyMaster.forms.find((f) => f.evolutionStage === 0) : null;
 
   battleState = {
+    mode: "wild",
     playerUnit,
     enemyUnit,
     playerInstance: leader.instance,
@@ -94,6 +102,80 @@ export function renderBattle(navigate, params = {}) {
     enemyLevel,
     stage,
     isBoss: !!isBoss,
+    isOver: false,
+    turnLocked: false,
+  };
+
+  renderBattleUI(screen, navigate);
+}
+
+// ---------- フレンドバトル(3vs3勝ち抜き) ----------
+
+// party(HP>0)/challenge.team からバトルユニットの「控えキュー」を作る。
+// 各要素: { unit, form, master, label }。友バトルは instance.currentHp を一切書き換えない（コピーで戦う）。
+function buildFriendQueueFromParty() {
+  const state = getState();
+  return state.party
+    .filter((instance) => instance.currentHp > 0)
+    .map((instance) => {
+      const master = getMonsterMaster(instance.monsterId);
+      const form = getFormForInstance(master, instance);
+      const unit = createBattleUnit({
+        name: displayName(instance, master),
+        emoji: master.emoji,
+        element: master.element,
+        stats: { ...instance.stats },
+        skillIds: master.skills,
+        level: instance.level,
+      });
+      unit.currentHp = instance.currentHp;
+      return { unit, form, master, label: displayName(instance, master) };
+    });
+}
+
+function buildFriendQueueFromChallenge(challenge) {
+  return challenge.team.map((entry) => {
+    const unit = createBattleUnit({
+      name: `${escapeHtml(challenge.trainerName)}さんの ${escapeHtml(entry.nickname)}`,
+      emoji: entry.master.emoji,
+      element: entry.master.element,
+      stats: { ...entry.stats },
+      skillIds: entry.master.skills,
+      level: entry.level,
+    });
+    return { unit, form: entry.form, master: entry.master, label: unit.name };
+  });
+}
+
+function renderFriendBattleStart(navigate, screen, params) {
+  const challenge = params.friendChallenge;
+  if (!challenge || !Array.isArray(challenge.team) || challenge.team.length === 0) {
+    screen.innerHTML = `<div class="empty-state">しょうぶの データが みつからなかったよ</div>`;
+    return;
+  }
+
+  const myQueue = buildFriendQueueFromParty();
+  if (myQueue.length === 0) {
+    showToast("たたかえる もちぽよが いないよ。ホームで やすませてあげよう");
+    navigate("home");
+    return;
+  }
+  const enemyQueue = buildFriendQueueFromChallenge(challenge);
+
+  battleState = {
+    mode: "friend",
+    trainerName: challenge.trainerName,
+    myQueue,
+    enemyQueue,
+    myIndex: 0,
+    enemyIndex: 0,
+    playerUnit: myQueue[0].unit,
+    enemyUnit: enemyQueue[0].unit,
+    playerForm: myQueue[0].form,
+    playerMaster: myQueue[0].master,
+    enemyMaster: enemyQueue[0].master,
+    enemyForm: enemyQueue[0].form,
+    isBoss: false,
     isOver: false,
     turnLocked: false,
   };
@@ -123,10 +205,18 @@ function computeEnemyStats(master, level, isBoss) {
 }
 
 function renderBattleUI(screen, navigate) {
+  const isFriend = battleState.mode === "friend";
   screen.innerHTML = `
     <div class="top-bar">
-      <h1 style="margin:0;">バトル</h1>
+      <h1 style="margin:0;">${isFriend ? "フレンドバトル" : "バトル"}</h1>
     </div>
+    ${
+      isFriend
+        ? `<p class="hint-text">${escapeHtml(battleState.trainerName)}さんとの 3vs3 しょうぶ！ (のこり ${
+            battleState.myQueue.length - battleState.myIndex
+          } vs ${battleState.enemyQueue.length - battleState.enemyIndex})</p>`
+        : ""
+    }
     <div class="battle-arena">
       <div class="battle-side enemy">
         <div class="battle-portrait" id="enemy-portrait">${monsterImageInnerHtml(battleState.enemyMaster, battleState.enemyForm, "icon")}</div>
@@ -182,13 +272,16 @@ function renderCommandButtons(navigate) {
   subPanel.innerHTML = "";
   grid.innerHTML = "";
 
+  const isFriend = battleState.mode === "friend";
   const commands = [
     { id: "skill", label: "スキル" },
     { id: "item", label: "アイテム" },
-    { id: "capture", label: "捕獲" },
+    ...(isFriend ? [] : [{ id: "capture", label: "捕獲" }]),
     { id: "guard", label: "ふんばる" },
     { id: "flee", label: "にげる" },
   ];
+
+  grid.classList.toggle("command-grid-4", isFriend);
 
   commands.forEach((cmd) => {
     const btn = document.createElement("button");
@@ -370,6 +463,13 @@ function doFlee(navigate) {
   disableCommands();
   resetGuard(battleState.playerUnit); // 前ターンのふんばるを解除（1ターン限り）
 
+  if (battleState.mode === "friend") {
+    // フレンドバトルには「にげる」に相当する降参のみ用意する（勝敗はつく）
+    appendLog([`${battleState.playerUnit.name}は しょうぶを ちゅうだんした...`]);
+    setTimeout(() => finishBattle("friend-lose", navigate), 800);
+    return;
+  }
+
   const fled = attemptFlee(battleState.isBoss);
   if (fled) {
     appendLog([`${battleState.playerUnit.name}は うまく にげだした！`]);
@@ -401,7 +501,7 @@ function runPlayerThenEnemyTurn(navigate, playerActionFn) {
     saveInstanceHp();
 
     if (isFainted(enemyUnit)) {
-      setTimeout(() => finishBattle("win", navigate), 700);
+      setTimeout(() => handleEnemyFainted(navigate), 700);
       return;
     }
     setTimeout(() => enemyTurn(navigate), 900);
@@ -418,7 +518,7 @@ function runPlayerThenEnemyTurn(navigate, playerActionFn) {
     saveInstanceHp();
 
     if (isFainted(playerUnit)) {
-      setTimeout(() => finishBattle("lose", navigate), 700);
+      setTimeout(() => handlePlayerFainted(navigate), 700);
       return;
     }
 
@@ -430,7 +530,7 @@ function runPlayerThenEnemyTurn(navigate, playerActionFn) {
       updateHpBars();
       saveInstanceHp();
       if (isFainted(enemyUnit)) {
-        setTimeout(() => finishBattle("win", navigate), 700);
+        setTimeout(() => handleEnemyFainted(navigate), 700);
         return;
       }
       endTurn(navigate);
@@ -451,11 +551,55 @@ function enemyTurn(navigate) {
   saveInstanceHp();
 
   if (isFainted(battleState.playerUnit)) {
-    setTimeout(() => finishBattle("lose", navigate), 700);
+    setTimeout(() => handlePlayerFainted(navigate), 700);
     return;
   }
 
   endTurn(navigate);
+}
+
+// 敵ユニットが倒れた時の分岐: 野生バトルは即勝利。フレンドバトルは相手の次の1体へ交代し、
+// 全滅していれば勝利。
+function handleEnemyFainted(navigate) {
+  if (battleState.mode !== "friend") {
+    finishBattle("win", navigate);
+    return;
+  }
+  battleState.enemyIndex += 1;
+  if (battleState.enemyIndex >= battleState.enemyQueue.length) {
+    finishBattle("friend-win", navigate);
+    return;
+  }
+  const next = battleState.enemyQueue[battleState.enemyIndex];
+  battleState.enemyUnit = next.unit;
+  battleState.enemyMaster = next.master;
+  battleState.enemyForm = next.form;
+  appendLog([`つぎは ${next.unit.name}に おまかせ！`]);
+  battleState.turnLocked = false; // 再描画でコマンドボタンを作り直すため、ロックも解除しておく
+  const screen = document.getElementById("screen-battle");
+  renderBattleUI(screen, navigate);
+}
+
+// 自分のユニットが倒れた時の分岐: 野生バトルは即敗北。フレンドバトルは自分の次の1体へ交代し、
+// 全滅していれば敗北。
+function handlePlayerFainted(navigate) {
+  if (battleState.mode !== "friend") {
+    finishBattle("lose", navigate);
+    return;
+  }
+  battleState.myIndex += 1;
+  if (battleState.myIndex >= battleState.myQueue.length) {
+    finishBattle("friend-lose", navigate);
+    return;
+  }
+  const next = battleState.myQueue[battleState.myIndex];
+  battleState.playerUnit = next.unit;
+  battleState.playerMaster = next.master;
+  battleState.playerForm = next.form;
+  appendLog([`つぎは ${next.unit.name}に おまかせ！`]);
+  battleState.turnLocked = false; // 再描画でコマンドボタンを作り直すため、ロックも解除しておく
+  const screen = document.getElementById("screen-battle");
+  renderBattleUI(screen, navigate);
 }
 
 function endTurn(navigate) {
@@ -466,6 +610,8 @@ function endTurn(navigate) {
 }
 
 function saveInstanceHp() {
+  // フレンドバトルはノーダメージ扱い（battleUnitはコピーで戦わせ、instance.currentHpに触れない）
+  if (battleState.mode === "friend") return;
   if (battleState.playerInstance) {
     battleState.playerInstance.currentHp = Math.max(0, battleState.playerUnit.currentHp);
   }
@@ -542,6 +688,20 @@ function finishBattle(result, navigate) {
       <p>${battleState.enemyMaster.name}が なかまに なった！</p>
       <p>${wentToBox ? "てもちが いっぱいだったので ボックスに おくられたよ。" : "てもちに くわわったよ！"}</p>
       <button class="btn btn-block" id="battle-continue-btn">つづける</button>
+    `;
+    screen.appendChild(overlay);
+    overlay.querySelector("#battle-continue-btn").addEventListener("click", () => {
+      screen.removeChild(overlay);
+      navigate("home");
+    });
+  } else if (result === "friend-win" || result === "friend-lose") {
+    // フレンドバトルは経験値・ゴールド・捕獲なし。HPも保存しない（ノーダメージ扱い）。やさしい結果表示のみ。
+    const won = result === "friend-win";
+    overlay.innerHTML = `
+      <div class="explore-emoji">${won ? "🎉" : "😊"}</div>
+      <h2>${won ? "かった！" : "まけちゃった！"}</h2>
+      <p>${escapeHtml(battleState.trainerName)}さんとの たのしい しょうぶだった！</p>
+      <button class="btn btn-block" id="battle-continue-btn">ホームへもどる</button>
     `;
     screen.appendChild(overlay);
     overlay.querySelector("#battle-continue-btn").addEventListener("click", () => {
