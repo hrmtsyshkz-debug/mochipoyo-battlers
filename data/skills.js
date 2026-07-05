@@ -280,6 +280,7 @@ export const skills = [
     element: '肉',
     power: 17,
     accuracy: 85,
+    actionType: 'mash',
     description: '満腹パワーを込めた重めの一撃。',
   },
   {
@@ -316,6 +317,7 @@ export const skills = [
     element: '甘味',
     power: 14,
     accuracy: 88,
+    actionType: 'mash',
     description: 'くるくる回って相手にぶつかる。',
   },
   {
@@ -338,6 +340,7 @@ export const skills = [
     element: '肉',
     power: 20,
     accuracy: 82,
+    actionType: 'mash',
     description: '香ばしい満腹パワーを込めた強烈な一撃。',
   },
   {
@@ -347,6 +350,7 @@ export const skills = [
     element: '無',
     power: 18,
     accuracy: 90,
+    actionType: 'mash',
     effect: {
       healSelf: 8,
     },

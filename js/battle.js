@@ -94,8 +94,9 @@ export function isFainted(unit) {
 
 // ---------- 1ターン行動解決 ----------
 // actor, target: battleUnit。skillId: 使用スキルid。
+// multiplier: ミニゲーム補正（連打・ぽよじゃんけん等）。攻撃/特殊のダメージ計算後に乗算する。デフォルト1.0。
 // 戻り値: { logs: string[], fainted: boolean }
-export function resolveSkillAction(actor, target, skillId) {
+export function resolveSkillAction(actor, target, skillId, multiplier = 1.0) {
   const skill = getSkill(skillId);
   const logs = [];
   if (!skill) return { logs, fainted: false };
@@ -111,7 +112,10 @@ export function resolveSkillAction(actor, target, skillId) {
     const attackerView = withEffectiveStats(actor);
     const defenderView = withEffectiveStats(target);
     defenderView.isGuarding = target.isGuarding;
-    const dmg = calcDamage(attackerView, defenderView, skill);
+    let dmg = calcDamage(attackerView, defenderView, skill);
+    if (multiplier !== 1.0) {
+      dmg = Math.max(1, Math.floor(dmg * multiplier));
+    }
     target.currentHp = Math.max(0, target.currentHp - dmg);
     logs.push(`${target.name}に ${dmg} のダメージ！`);
     if (target.isGuarding) {
@@ -136,7 +140,7 @@ export function resolveSkillAction(actor, target, skillId) {
       if (skill.effect.speedDown) addBuff(actor, "speed", -skill.effect.speedDown, duration);
     }
   } else if (skill.type === "heal") {
-    const healAmount = skill.power;
+    const healAmount = multiplier !== 1.0 ? Math.max(1, Math.floor(skill.power * multiplier)) : skill.power;
     actor.currentHp = Math.min(actor.maxHp, actor.currentHp + healAmount);
     logs.push(`${actor.name}は ${healAmount} かいふくした！`);
   } else if (skill.type === "buff") {
@@ -178,8 +182,9 @@ export function resetGuard(unit) {
 }
 
 // ---------- 捕獲 ----------
-// captureRate = enemy.baseCaptureRate + hpBonus + item.capturePower * 0.1、最大0.95
-export function calcCaptureRate(enemyMaster, enemyUnit, item) {
+// captureRate = enemy.baseCaptureRate + hpBonus + item.capturePower * 0.1 + timingBonus
+// 最終的に 0.02〜0.95 の範囲にクランプする（ミニゲーム仕様 v0.5）
+export function calcCaptureRate(enemyMaster, enemyUnit, item, timingBonus = 0) {
   const hpRatio = enemyUnit.currentHp / enemyUnit.maxHp;
   let hpBonus = 0;
   if (hpRatio <= 0.25) {
@@ -189,12 +194,12 @@ export function calcCaptureRate(enemyMaster, enemyUnit, item) {
   } else if (hpRatio <= 0.75) {
     hpBonus = 0.1;
   }
-  const rate = enemyMaster.baseCaptureRate + hpBonus + item.capturePower * 0.1;
-  return Math.min(0.95, rate);
+  const rate = enemyMaster.baseCaptureRate + hpBonus + item.capturePower * 0.1 + timingBonus;
+  return Math.min(0.95, Math.max(0.02, rate));
 }
 
-export function attemptCapture(enemyMaster, enemyUnit, item) {
-  const rate = calcCaptureRate(enemyMaster, enemyUnit, item);
+export function attemptCapture(enemyMaster, enemyUnit, item, timingBonus = 0) {
+  const rate = calcCaptureRate(enemyMaster, enemyUnit, item, timingBonus);
   return Math.random() < rate;
 }
 

@@ -31,6 +31,7 @@ import {
   attemptFlee,
 } from "../battle.js";
 import { showToast, displayName, monsterImageInnerHtml, escapeHtml } from "../ui.js";
+import { playTimingGame, playMashGame, playJankenGame } from "../minigames.js";
 
 let battleState = null; // { playerUnit, enemyUnit, playerInstance, enemyMaster, stage, isBoss, isOver, mode, ... }
 
@@ -100,6 +101,8 @@ export function renderBattle(navigate, params = {}) {
     isBoss: !!isBoss,
     isOver: false,
     turnLocked: false,
+    bossJankenUsed: false,
+    nextActionMultiplier: 1.0,
   };
 
   renderBattleUI(screen, navigate);
@@ -171,6 +174,8 @@ function renderFriendBattleStart(navigate, screen, params) {
     isBoss: false,
     isOver: false,
     turnLocked: false,
+    bossJankenUsed: false,
+    nextActionMultiplier: 1.0,
   };
 
   renderBattleUI(screen, navigate);
@@ -393,13 +398,33 @@ function doSkill(skillId, navigate) {
   clearSubPanel();
   battleState.turnLocked = true;
   disableCommands();
-  runPlayerThenEnemyTurn(navigate, (actor, target) => resolveSkillAction(actor, target, skillId));
+
+  const skill = getSkill(skillId);
+  const jankenMultiplier = consumeNextActionMultiplier();
+
+  if (skill && skill.actionType === "mash") {
+    playMashGame().then((mashResult) => {
+      const totalMultiplier = jankenMultiplier * mashResult.multiplier;
+      runPlayerThenEnemyTurn(navigate, (actor, target) => resolveSkillAction(actor, target, skillId, totalMultiplier));
+    });
+    return;
+  }
+
+  runPlayerThenEnemyTurn(navigate, (actor, target) => resolveSkillAction(actor, target, skillId, jankenMultiplier));
+}
+
+// ぽよじゃんけんの次行動補正を取り出し、使用後は必ず1.0にリセットする（行動種別を問わず1回だけ消費）
+function consumeNextActionMultiplier() {
+  const multiplier = battleState.nextActionMultiplier || 1.0;
+  battleState.nextActionMultiplier = 1.0;
+  return multiplier;
 }
 
 function doGuard(navigate) {
   clearSubPanel();
   battleState.turnLocked = true;
   disableCommands();
+  consumeNextActionMultiplier(); // ふんばるには数値補正がないため消費のみ行う
   // ふんばるは行動順に関係なく先に構え、このターンの敵の攻撃を必ず軽減する
   resetGuard(battleState.playerUnit);
   const result = resolveGuardAction(battleState.playerUnit);
@@ -417,11 +442,10 @@ function doItem(item, navigate) {
   battleState.turnLocked = true;
   disableCommands();
   resetGuard(battleState.playerUnit); // 前ターンのふんばるを解除（1ターン限り）
-  battleState.playerUnit.currentHp = Math.min(
-    battleState.playerUnit.maxHp,
-    battleState.playerUnit.currentHp + item.healAmount
-  );
-  appendLog([`${battleState.playerUnit.name}は ${item.name}を つかった！`, `HPが ${item.healAmount} かいふくした！`]);
+  const multiplier = consumeNextActionMultiplier();
+  const healAmount = multiplier !== 1.0 ? Math.max(1, Math.floor(item.healAmount * multiplier)) : item.healAmount;
+  battleState.playerUnit.currentHp = Math.min(battleState.playerUnit.maxHp, battleState.playerUnit.currentHp + healAmount);
+  appendLog([`${battleState.playerUnit.name}は ${item.name}を つかった！`, `HPが ${healAmount} かいふくした！`]);
   updateHpBars();
   saveGame();
   setTimeout(() => enemyTurn(navigate), 900);
@@ -437,17 +461,20 @@ function doCapture(item, navigate) {
   battleState.turnLocked = true;
   disableCommands();
   resetGuard(battleState.playerUnit); // 前ターンのふんばるを解除（1ターン限り）
+  consumeNextActionMultiplier(); // 捕獲は「行動」扱いのため、じゃんけん補正が残っていれば消費だけしておく
   saveGame();
 
-  const captured = attemptCapture(battleState.enemyMaster, battleState.enemyUnit, item);
-  if (captured) {
-    appendLog([`${item.name}を なげた！`, `やった！ ${battleState.enemyMaster.name}を つかまえた！`]);
-    finishBattle("capture", navigate);
-    return;
-  }
+  playTimingGame().then(({ grade, captureBonus }) => {
+    const captured = attemptCapture(battleState.enemyMaster, battleState.enemyUnit, item, captureBonus);
+    if (captured) {
+      appendLog([`${item.name}を なげた！`, `やった！ ${battleState.enemyMaster.name}を つかまえた！`]);
+      finishBattle("capture", navigate);
+      return;
+    }
 
-  appendLog([`${item.name}を なげた！`, `しかし ${battleState.enemyMaster.name}は にげようとしている...`]);
-  setTimeout(() => enemyTurn(navigate), 900);
+    appendLog([`${item.name}を なげた！`, `しかし ${battleState.enemyMaster.name}は にげようとしている...`]);
+    setTimeout(() => enemyTurn(navigate), 900);
+  });
 }
 
 function doFlee(navigate) {
@@ -455,6 +482,7 @@ function doFlee(navigate) {
   battleState.turnLocked = true;
   disableCommands();
   resetGuard(battleState.playerUnit); // 前ターンのふんばるを解除（1ターン限り）
+  consumeNextActionMultiplier(); // にげるにも数値補正はないため消費のみ行う
 
   if (battleState.mode === "friend") {
     // フレンドバトルには「にげる」に相当する降参のみ用意する（勝敗はつく）
@@ -596,6 +624,32 @@ function handlePlayerFainted(navigate) {
 function endTurn(navigate) {
   tickBuffs(battleState.playerUnit);
   tickBuffs(battleState.enemyUnit);
+
+  if (shouldTriggerBossJanken()) {
+    battleState.bossJankenUsed = true;
+    battleState.turnLocked = true;
+    disableCommands();
+    playJankenGame().then((jankenResult) => {
+      battleState.nextActionMultiplier = jankenResult.multiplier;
+      unlockCommands();
+    });
+    return;
+  }
+
+  unlockCommands();
+}
+
+// ボスHPが50%以下になった次のプレイヤー行動前に1回だけ、ぽよじゃんけんを発生させる
+function shouldTriggerBossJanken() {
+  if (battleState.mode !== "wild" || !battleState.isBoss) return false;
+  if (battleState.bossJankenUsed) return false;
+  if (battleState.isOver) return false;
+  const enemy = battleState.enemyUnit;
+  if (!enemy || enemy.maxHp <= 0) return false;
+  return enemy.currentHp / enemy.maxHp <= 0.5;
+}
+
+function unlockCommands() {
   battleState.turnLocked = false;
   document.querySelectorAll("#command-grid .command-btn").forEach((b) => (b.disabled = false));
 }

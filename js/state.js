@@ -27,6 +27,7 @@ function createInitialSaveData() {
     settings: {
       sound: true,
       reducedMotion: false,
+      easyMiniGames: false,
     },
   };
 }

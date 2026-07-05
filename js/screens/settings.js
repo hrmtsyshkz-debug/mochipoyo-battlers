@@ -50,6 +50,17 @@ export function renderSettings(navigate) {
       </label>
     </div>
 
+    <div class="settings-row">
+      <div class="settings-label">
+        <div>ミニゲームかんたんモード</div>
+        <div class="hint-text">ONにすると ミニゲームが じどうで OKあつかいになるよ</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-easy-minigames" ${state.settings.easyMiniGames ? "checked" : ""} />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
     <button class="btn btn-danger btn-block" id="btn-delete-save" style="margin-top:24px;">セーブデータを けす</button>
   `;
 
@@ -71,6 +82,11 @@ export function renderSettings(navigate) {
   screen.querySelector("#toggle-reduced-motion").addEventListener("change", (e) => {
     state.settings.reducedMotion = e.target.checked;
     document.body.classList.toggle("reduced-motion", state.settings.reducedMotion);
+    saveGame();
+  });
+
+  screen.querySelector("#toggle-easy-minigames").addEventListener("change", (e) => {
+    state.settings.easyMiniGames = e.target.checked;
     saveGame();
   });
 
