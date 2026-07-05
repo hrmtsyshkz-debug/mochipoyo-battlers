@@ -11,6 +11,7 @@ import { renderSettings } from "./screens/settings.js";
 import { renderParty } from "./screens/party.js";
 import { showToast } from "./ui.js";
 import { parseChallengeFromSearch } from "./challenge.js";
+import { supportButtonsHtml } from "./support.js";
 
 const screenRenderers = {
   starter: renderStarter,
@@ -158,6 +159,12 @@ function init() {
 
   document.getElementById("screen-title").classList.add("active");
   initTitleScreen();
+
+  // おうえん（投げ銭）リンク。URL未設定のあいだは何も表示されない
+  const supportHtml = supportButtonsHtml();
+  if (supportHtml) {
+    document.querySelector("#screen-title .title-buttons").insertAdjacentHTML("afterend", supportHtml);
+  }
 }
 
 init();

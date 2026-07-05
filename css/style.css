@@ -1209,6 +1209,40 @@ img.monster-img {
   100% { transform: scale(1); }
 }
 
+/* ===== おうえん（投げ銭）リンク ===== */
+.support-box {
+  margin-top: 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.support-note {
+  font-size: 12px;
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+.support-link {
+  display: inline-block;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--color-white);
+  color: var(--color-primary-dark);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.12s ease;
+}
+
+.support-link:hover {
+  transform: scale(1.05);
+  background: #fff5f8;
+}
+
 /* ---- ぽよじゃんけんカード ---- */
 .janken-cards {
   display: flex;

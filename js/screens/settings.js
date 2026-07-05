@@ -2,6 +2,7 @@
 import { getState, deleteSaveData, saveGame } from "../state.js";
 import { showToast } from "../ui.js";
 import { DEFAULT_TRAINER_NAME } from "../challenge.js";
+import { supportButtonsHtml } from "../support.js";
 
 export function renderSettings(navigate) {
   const screen = document.getElementById("screen-settings");
@@ -60,6 +61,8 @@ export function renderSettings(navigate) {
         <span class="toggle-slider"></span>
       </label>
     </div>
+
+    ${supportButtonsHtml()}
 
     <button class="btn btn-danger btn-block" id="btn-delete-save" style="margin-top:24px;">セーブデータを けす</button>
   `;
