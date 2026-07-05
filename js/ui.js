@@ -25,7 +25,7 @@ export function el(tag, className, content) {
   return node;
 }
 
-// 画像素材: form/master の icon・full チェーンから最初に有効な画像パスを解決し、
+// 画像素材: species.images の icon・full チェーンから最初に有効な画像パスを解決し、
 // 存在しない/読み込み失敗時は master.emoji にフォールバックする。
 // 一度失敗したパスは記憶し、再レンダー時に無駄な404リクエストを出さない。
 const failedImageSrcs = new Set();
@@ -38,17 +38,12 @@ window.__mochipoyoImgError = function (img) {
   if (fallback) fallback.style.display = "";
 };
 
-// kind: "icon" | "full"。発注元指定の優先順位でフォールバックチェーンを辿る。
-// icon: form.icon → form.full → master.icon → master.full → null
-// full: form.full → master.full → form.icon → master.icon → null
-// master.images はトップレベルに存在しない場合もあるため安全に読む。
-export function resolveMonsterImage(master, form, kind) {
-  const formImages = (form && form.images) || {};
-  const masterImages = (master && master.images) || {};
-  const chain =
-    kind === "full"
-      ? [formImages.full, masterImages.full, formImages.icon, masterImages.icon]
-      : [formImages.icon, formImages.full, masterImages.icon, masterImages.full];
+// kind: "icon" | "full"。species.images直参照のフォールバックチェーンを辿る。
+// icon: icon → full → null
+// full: full → icon → null
+export function resolveMonsterImage(master, kind) {
+  const images = (master && master.images) || {};
+  const chain = kind === "full" ? [images.full, images.icon] : [images.icon, images.full];
   for (const src of chain) {
     if (src && !failedImageSrcs.has(src)) {
       return src;
@@ -58,21 +53,20 @@ export function resolveMonsterImage(master, form, kind) {
 }
 
 // 画像+絵文字フォールバックの中身HTML（丸カード・肖像などの親要素に入れて使う）
-export function monsterImageInnerHtml(master, form = null, kind = "icon") {
+export function monsterImageInnerHtml(master, kind = "icon") {
   if (!master) return "❓";
   const emoji = master.emoji || "❓";
-  const src = resolveMonsterImage(master, form, kind);
+  const src = resolveMonsterImage(master, kind);
   if (!src) return emoji;
   return `<img class="monster-img" src="${src}" alt="${master.name}" onerror="__mochipoyoImgError(this)"><span style="display:none;">${emoji}</span>`;
 }
 
 export function monsterAvatarHtml(master, options = {}) {
-  const { large = false, silhouette = false, form = null } = options;
+  const { large = false, silhouette = false } = options;
   const classes = ["monster-avatar"];
   if (large) classes.push("large");
   if (silhouette) classes.push("silhouette");
-  const resolvedForm = form || (master && Array.isArray(master.forms) ? master.forms.find((f) => f.evolutionStage === 0) : null);
-  const inner = silhouette ? "？" : monsterImageInnerHtml(master, resolvedForm, "icon");
+  const inner = silhouette ? "？" : monsterImageInnerHtml(master, "icon");
   return `<div class="${classes.join(" ")}">${inner}</div>`;
 }
 
@@ -86,10 +80,9 @@ window.__mochipoyoFullArtError = function (img) {
 };
 
 // full系チェーンで画像が取れれば角丸の縦カード、無ければ従来の丸アバター+絵文字にフォールバック
-export function monsterFullArtHtml(master, form = null) {
+export function monsterFullArtHtml(master) {
   if (!master) return `<div class="monster-avatar large">❓</div>`;
-  const resolvedForm = form || (Array.isArray(master.forms) ? master.forms.find((f) => f.evolutionStage === 0) : null);
-  const src = resolveMonsterImage(master, resolvedForm, "full");
+  const src = resolveMonsterImage(master, "full");
   const emoji = master.emoji || "❓";
   const fallbackAvatar = `<div class="monster-avatar large" style="display:none;">${emoji}</div>`;
   if (!src) {

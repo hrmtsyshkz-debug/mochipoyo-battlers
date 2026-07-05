@@ -1,12 +1,15 @@
 // ステージデータ（仕様書 v0.2 準拠、4ステージ）
+// enemySpeciesIds / bossSpeciesId は species.speciesId を参照する。
+// bossDropItemId: ボス勝利時に毎回1個ドロップするボス進化アイテム。
 export const stages = [
   {
     id: 'shopping_street',
     name: '商店街',
     description: '和菓子屋、たこ焼き屋、パン屋が並ぶ、にぎやかな商店街。',
     unlockCondition: null,
-    enemyMonsterIds: [1, 4, 5, 7, 10, 13],
-    bossMonsterId: 4,
+    enemySpeciesIds: [1, 10, 12, 14, 17, 20],
+    bossSpeciesId: 10,
+    bossDropItemId: 'mochi_boss_ribbon',
     backgroundEmoji: '🏮',
     recommendedLevel: 1,
   },
@@ -18,8 +21,9 @@ export const stages = [
     unlockCondition: {
       clearStageId: 'shopping_street',
     },
-    enemyMonsterIds: [2, 6, 8, 9, 11, 14, 15, 16, 18],
-    bossMonsterId: 15,
+    enemySpeciesIds: [4, 13, 15, 16, 18, 21, 22, 24, 26],
+    bossSpeciesId: 22,
+    bossDropItemId: 'sugar_ring',
     backgroundEmoji: '🍽️',
     recommendedLevel: 5,
   },
@@ -30,8 +34,9 @@ export const stages = [
     unlockCondition: {
       clearStageId: 'food_court',
     },
-    enemyMonsterIds: [3, 12, 17, 19],
-    bossMonsterId: 19,
+    enemySpeciesIds: [7, 19, 25, 27],
+    bossSpeciesId: 27,
+    bossDropItemId: 'kongari_medal',
     backgroundEmoji: '🥩',
     recommendedLevel: 10,
   },
@@ -42,8 +47,9 @@ export const stages = [
     unlockCondition: {
       clearStageId: 'yakiniku_street',
     },
-    enemyMonsterIds: [18, 19, 20],
-    bossMonsterId: 20,
+    enemySpeciesIds: [26, 27, 29],
+    bossSpeciesId: 29,
+    bossDropItemId: 'fullness_crown',
     backgroundEmoji: '✨',
     recommendedLevel: 18,
   },

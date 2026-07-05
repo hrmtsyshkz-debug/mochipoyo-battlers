@@ -7,6 +7,7 @@ import {
   getPartyWithMaster,
   getItemCount,
   useItem,
+  addItem,
   addGold,
   calcExpGain,
   gainExp,
@@ -15,7 +16,7 @@ import {
   discoverMonster,
   addMonsterToPartyOrBox,
   saveGame,
-  getFormForInstance,
+  getItem,
 } from "../state.js";
 import {
   createBattleUnit,
@@ -56,14 +57,14 @@ export function renderBattle(navigate, params = {}) {
     navigate("home");
     return;
   }
-  const { enemyMonsterId, enemyLevel, stage, isBoss } = params;
-  const enemyMaster = getMonsterMaster(enemyMonsterId);
+  const { enemySpeciesId, enemyLevel, stage, isBoss } = params;
+  const enemyMaster = getMonsterMaster(enemySpeciesId);
   if (!enemyMaster) {
     screen.innerHTML = `<div class="empty-state">敵が見つかりませんでした</div>`;
     return;
   }
 
-  discoverMonster(enemyMaster.id, { captured: false });
+  discoverMonster(enemyMaster.speciesId, { owned: false });
   saveGame();
 
   const playerStats = computeBattleStats(leader.instance);
@@ -87,18 +88,13 @@ export function renderBattle(navigate, params = {}) {
     level: enemyLevel,
   });
 
-  const playerForm = getFormForInstance(leader.master, leader.instance);
-  const enemyForm = Array.isArray(enemyMaster.forms) ? enemyMaster.forms.find((f) => f.evolutionStage === 0) : null;
-
   battleState = {
     mode: "wild",
     playerUnit,
     enemyUnit,
     playerInstance: leader.instance,
     playerMaster: leader.master,
-    playerForm,
     enemyMaster,
-    enemyForm,
     enemyLevel,
     stage,
     isBoss: !!isBoss,
@@ -112,14 +108,13 @@ export function renderBattle(navigate, params = {}) {
 // ---------- フレンドバトル(3vs3勝ち抜き) ----------
 
 // party(HP>0)/challenge.team からバトルユニットの「控えキュー」を作る。
-// 各要素: { unit, form, master, label }。友バトルは instance.currentHp を一切書き換えない（コピーで戦う）。
+// 各要素: { unit, master, label }。友バトルは instance.currentHp を一切書き換えない（コピーで戦う）。
 function buildFriendQueueFromParty() {
   const state = getState();
   return state.party
     .filter((instance) => instance.currentHp > 0)
     .map((instance) => {
-      const master = getMonsterMaster(instance.monsterId);
-      const form = getFormForInstance(master, instance);
+      const master = getMonsterMaster(instance.speciesId);
       const unit = createBattleUnit({
         name: displayName(instance, master),
         emoji: master.emoji,
@@ -129,7 +124,7 @@ function buildFriendQueueFromParty() {
         level: instance.level,
       });
       unit.currentHp = instance.currentHp;
-      return { unit, form, master, label: displayName(instance, master) };
+      return { unit, master, label: displayName(instance, master) };
     });
 }
 
@@ -143,7 +138,7 @@ function buildFriendQueueFromChallenge(challenge) {
       skillIds: entry.master.skills,
       level: entry.level,
     });
-    return { unit, form: entry.form, master: entry.master, label: unit.name };
+    return { unit, master: entry.master, label: unit.name };
   });
 }
 
@@ -171,10 +166,8 @@ function renderFriendBattleStart(navigate, screen, params) {
     enemyIndex: 0,
     playerUnit: myQueue[0].unit,
     enemyUnit: enemyQueue[0].unit,
-    playerForm: myQueue[0].form,
     playerMaster: myQueue[0].master,
     enemyMaster: enemyQueue[0].master,
-    enemyForm: enemyQueue[0].form,
     isBoss: false,
     isOver: false,
     turnLocked: false,
@@ -219,7 +212,7 @@ function renderBattleUI(screen, navigate) {
     }
     <div class="battle-arena">
       <div class="battle-side enemy">
-        <div class="battle-portrait" id="enemy-portrait">${monsterImageInnerHtml(battleState.enemyMaster, battleState.enemyForm, "icon")}</div>
+        <div class="battle-portrait" id="enemy-portrait">${monsterImageInnerHtml(battleState.enemyMaster, "icon")}</div>
         <div class="battle-status">
           <div class="battle-name">${battleState.enemyUnit.name}${battleState.isBoss ? " (ボス)" : ""}</div>
           <div class="hp-bar-outer"><div class="hp-bar-inner" id="enemy-hp-bar"></div></div>
@@ -227,7 +220,7 @@ function renderBattleUI(screen, navigate) {
         </div>
       </div>
       <div class="battle-side">
-        <div class="battle-portrait" id="player-portrait">${monsterImageInnerHtml(battleState.playerMaster, battleState.playerForm, "icon")}</div>
+        <div class="battle-portrait" id="player-portrait">${monsterImageInnerHtml(battleState.playerMaster, "icon")}</div>
         <div class="battle-status">
           <div class="battle-name">${battleState.playerUnit.name}</div>
           <div class="hp-bar-outer"><div class="hp-bar-inner" id="player-hp-bar"></div></div>
@@ -573,7 +566,6 @@ function handleEnemyFainted(navigate) {
   const next = battleState.enemyQueue[battleState.enemyIndex];
   battleState.enemyUnit = next.unit;
   battleState.enemyMaster = next.master;
-  battleState.enemyForm = next.form;
   appendLog([`つぎは ${next.unit.name}に おまかせ！`]);
   battleState.turnLocked = false; // 再描画でコマンドボタンを作り直すため、ロックも解除しておく
   const screen = document.getElementById("screen-battle");
@@ -595,7 +587,6 @@ function handlePlayerFainted(navigate) {
   const next = battleState.myQueue[battleState.myIndex];
   battleState.playerUnit = next.unit;
   battleState.playerMaster = next.master;
-  battleState.playerForm = next.form;
   appendLog([`つぎは ${next.unit.name}に おまかせ！`]);
   battleState.turnLocked = false; // 再描画でコマンドボタンを作り直すため、ロックも解除しておく
   const screen = document.getElementById("screen-battle");
@@ -640,6 +631,7 @@ function finishBattle(result, navigate) {
     const levelUps = gainExp(battleState.playerInstance, expGain);
 
     let bossClearedMsg = "";
+    let bossDropMsg = "";
     if (battleState.isBoss && battleState.stage) {
       const alreadyCleared = getState().clearedStages.includes(battleState.stage.id);
       markStageCleared(battleState.stage.id);
@@ -653,6 +645,14 @@ function finishBattle(result, navigate) {
                 .map((s) => s.name)
                 .join("、")}が かいほうされたよ！</p>`
             : `<p>🎊 ${battleState.stage.name}の ボスを たおした！ すべての エリアを クリアしたよ！ すごい！</p>`;
+      }
+      // ボス勝利時は毎回1個ドロップする（ボス進化アイテム）
+      if (battleState.stage.bossDropItemId) {
+        addItem(battleState.stage.bossDropItemId, 1);
+        const dropItem = getItem(battleState.stage.bossDropItemId);
+        const dropName = dropItem ? dropItem.name : battleState.stage.bossDropItemId;
+        const dropEmoji = dropItem && dropItem.emoji ? dropItem.emoji : "🎁";
+        bossDropMsg = `<p>${dropEmoji} ${dropName}を てにいれた！</p>`;
       }
     }
 
@@ -669,6 +669,7 @@ function finishBattle(result, navigate) {
       <p>🪙 ${goldGain} ゴールドを かくとく</p>
       ${levelUps > 0 ? `<p>${battleState.playerUnit.name}は レベルが ${levelUps} あがった！</p>` : ""}
       ${evolveHint}
+      ${bossDropMsg}
       ${bossClearedMsg}
       <button class="btn btn-block" id="battle-continue-btn">つづける</button>
     `;
@@ -680,7 +681,7 @@ function finishBattle(result, navigate) {
     });
   } else if (result === "capture") {
     const wentToBox = getState().party.length >= 3;
-    addMonsterToPartyOrBox(battleState.enemyMaster.id, battleState.enemyLevel);
+    addMonsterToPartyOrBox(battleState.enemyMaster.speciesId, battleState.enemyLevel);
     saveGame();
     overlay.innerHTML = `
       <div class="explore-emoji">🎊</div>

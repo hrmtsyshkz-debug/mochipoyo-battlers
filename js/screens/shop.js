@@ -21,7 +21,8 @@ export function renderShop(navigate) {
   screen.querySelector("#btn-back").addEventListener("click", () => navigate("home"));
 
   const list = screen.querySelector("#shop-list");
-  items.forEach((item) => {
+  // ボス進化アイテム等、priceを持たないアイテムはショップに陳列しない
+  items.filter((item) => typeof item.price === "number").forEach((item) => {
     const row = document.createElement("div");
     row.className = "shop-row";
     row.dataset.itemId = item.id;

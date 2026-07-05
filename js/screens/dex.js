@@ -1,26 +1,26 @@
-// 図鑑画面
-import { monsters } from "../../data/monsters.js";
+// 図鑑画面（ポケモン方式: 1species = 1枠。進化で入手した種も通常の1枠として表示）
+import { species } from "../../data/monsters.js";
 import { getDexEntry } from "../state.js";
 import { monsterAvatarHtml, monsterFullArtHtml, rarityLabel } from "../ui.js";
 
-// 図鑑番号はデータのdexNoを正とする（未定義ならidから生成）
+// 図鑑番号はデータのdexNoを正とする（未定義ならspeciesIdから生成）
 function dexNoOf(master) {
-  return master.dexNo || String(master.id).padStart(3, "0");
+  return master.dexNo || String(master.speciesId).padStart(3, "0");
 }
 
 export function renderDex(navigate) {
   const screen = document.getElementById("screen-dex");
 
-  // バグ回避: 発見数カウントは図鑑に表示される対象（monsters配列全体）だけを数える
-  const seenCount = monsters.filter((m) => getDexEntry(m.id).seen).length;
-  const capturedCount = monsters.filter((m) => getDexEntry(m.id).captured).length;
+  // バグ回避: 発見数カウントは図鑑に表示される対象（species配列全体）だけを数える
+  const seenCount = species.filter((s) => getDexEntry(s.speciesId).seen).length;
+  const ownedCount = species.filter((s) => getDexEntry(s.speciesId).owned).length;
 
   screen.innerHTML = `
     <div class="top-bar">
       <button class="back-btn" id="btn-back">← もどる</button>
       <h1 style="margin:0;">ずかん</h1>
     </div>
-    <p>はっけん: ${seenCount} / ${monsters.length}　（つかまえた: ${capturedCount}）</p>
+    <p>はっけん: ${seenCount} / ${species.length}　（つかまえた: ${ownedCount}）</p>
     <div class="dex-grid" id="dex-grid"></div>
     <div id="dex-detail"></div>
   `;
@@ -28,8 +28,8 @@ export function renderDex(navigate) {
   screen.querySelector("#btn-back").addEventListener("click", () => navigate("home"));
 
   const grid = screen.querySelector("#dex-grid");
-  monsters.forEach((m) => {
-    const entry = getDexEntry(m.id);
+  species.forEach((m) => {
+    const entry = getDexEntry(m.speciesId);
     const cell = document.createElement("div");
     cell.className = "dex-cell";
     cell.innerHTML = `
@@ -56,7 +56,7 @@ function showDetail(master, entry) {
     return;
   }
 
-  if (!entry.captured) {
+  if (!entry.owned) {
     detail.innerHTML = `
       <div class="raise-detail" style="margin-top:16px;">
         ${monsterAvatarHtml(master)}
@@ -67,17 +67,10 @@ function showDetail(master, entry) {
     return;
   }
 
-  // 図鑑に記録された最高進化段階のformでフルアートを表示（未記録なら基本形態）
-  const bestStage = entry.evolved && typeof entry.evolvedStage === "number" ? entry.evolvedStage : 0;
-  const dexForm =
-    Array.isArray(master.forms) && master.forms.length > 0
-      ? master.forms.find((f) => f.evolutionStage === bestStage) || master.forms[0]
-      : null;
-
   detail.innerHTML = `
     <div class="raise-detail" style="margin-top:16px;">
-      ${monsterFullArtHtml(master, dexForm)}
-      <h2>No.${dexNoOf(master)} ${master.name}${entry.evolved ? `（${entry.evolvedName}）` : ""}</h2>
+      ${monsterFullArtHtml(master)}
+      <h2>No.${dexNoOf(master)} ${master.name}</h2>
       <p>属性: ${master.element.join(" / ")}　分類: ${master.classification}</p>
       <p>レア度: ${rarityLabel(master.rarity)}　好物: ${master.favoriteFood}</p>
       <p>生息地: ${master.habitat.join(" / ")}</p>

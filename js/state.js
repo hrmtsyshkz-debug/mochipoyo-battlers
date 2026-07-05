@@ -1,11 +1,11 @@
-// ゲーム状態管理 + LocalStorage セーブ/ロード（仕様書 v0.2 準拠）
-import { monsters } from "../data/monsters.js";
+// ゲーム状態管理 + LocalStorage セーブ/ロード（ポケモン方式: species直参照、ボス進化対応）
+import { species } from "../data/monsters.js";
 import { items } from "../data/items.js";
 import { skills } from "../data/skills.js";
 import { stages } from "../data/stages.js";
 
-export const SAVE_KEY = "mochipoyo_battlers_save_v1";
-const SAVE_VERSION = 1;
+export const SAVE_KEY = "mochipoyo_battlers_save_v2";
+const SAVE_VERSION = 2;
 
 function createInitialSaveData() {
   return {
@@ -39,8 +39,8 @@ export function getState() {
   return state;
 }
 
-export function getMonsterMaster(monsterId) {
-  return monsters.find((m) => m.id === monsterId) || null;
+export function getMonsterMaster(speciesId) {
+  return species.find((s) => s.speciesId === speciesId) || null;
 }
 
 export function getSkill(skillId) {
@@ -57,6 +57,7 @@ export function getStage(stageId) {
 
 // ---------- セーブ / ロード ----------
 
+// v1(旧forms内包型)セーブは移行しない。v2キーが無ければ「セーブなし」として扱う。
 export function hasSaveData() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -99,8 +100,8 @@ function normalizeSaveData(parsed) {
       ...base.player,
       ...(parsed.player || {}),
     },
-    party: Array.isArray(parsed.party) ? parsed.party.map(normalizeMonsterInstance) : [],
-    box: Array.isArray(parsed.box) ? parsed.box.map(normalizeMonsterInstance) : [],
+    party: Array.isArray(parsed.party) ? parsed.party.map(normalizeMonsterInstance).filter(Boolean) : [],
+    box: Array.isArray(parsed.box) ? parsed.box.map(normalizeMonsterInstance).filter(Boolean) : [],
     inventory:
       parsed.inventory && typeof parsed.inventory === "object" ? parsed.inventory : { ...base.inventory },
     dex: parsed.dex && typeof parsed.dex === "object" ? parsed.dex : {},
@@ -113,13 +114,10 @@ function normalizeSaveData(parsed) {
   return normalized;
 }
 
-// 旧セーブ互換: evolutionStage が無いインスタンスは evolved フラグから補完する（旧形式は単一進化のみ）
+// 不正/存在しないspeciesIdのインスタンスはnullを返し、呼び出し側でフィルタする
 function normalizeMonsterInstance(instance) {
-  if (!instance || typeof instance !== "object") return instance;
-  if (typeof instance.evolutionStage !== "number") {
-    instance.evolutionStage = instance.evolved ? 1 : 0;
-  }
-  instance.evolved = instance.evolutionStage > 0;
+  if (!instance || typeof instance !== "object") return null;
+  if (!getMonsterMaster(instance.speciesId)) return null;
   return instance;
 }
 
@@ -142,35 +140,23 @@ export function deleteSaveData() {
 
 // ---------- モンスターインスタンス ----------
 
-function makeInstanceId(monsterId) {
-  return `poyo_${String(monsterId).padStart(3, "0")}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+function makeInstanceId(speciesId) {
+  return `poyo_${String(speciesId).padStart(3, "0")}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 }
 
-export function createMonsterInstance(monsterId, level = 1) {
-  const master = getMonsterMaster(monsterId);
+export function createMonsterInstance(speciesId, level = 1) {
+  const master = getMonsterMaster(speciesId);
   if (!master) return null;
   const stats = computeStatsAtLevel(master, level);
   return {
-    instanceId: makeInstanceId(monsterId),
-    monsterId,
+    instanceId: makeInstanceId(speciesId),
+    speciesId,
     nickname: master.name,
     level,
     exp: 0,
     currentHp: stats.hp,
-    evolved: false,
-    evolutionStage: 0,
     stats,
   };
-}
-
-// インスタンスの現在の進化形態(form)を返す。stage が forms の範囲外なら最後のformにクランプする。
-export function getFormForInstance(master, instance) {
-  if (!master || !Array.isArray(master.forms) || master.forms.length === 0) return null;
-  const stage = instance && typeof instance.evolutionStage === "number" ? instance.evolutionStage : 0;
-  const clampedStage = Math.max(0, Math.min(stage, master.forms.length - 1));
-  return (
-    master.forms.find((f) => f.evolutionStage === clampedStage) || master.forms[clampedStage] || master.forms[0]
-  );
 }
 
 // レベル成長: +3/+1/+1/+1/+1/+1 (hp/poyoPower/mochiDefense/speed/appetite/charm) を (level-1) 回加算
@@ -184,32 +170,27 @@ function computeStatsAtLevel(master, level) {
   return stats;
 }
 
-// evolutionStage段分の進化ブースト(1.15倍/段)を複利で適用したレベル成長ステータスを計算する。
-// フレンドバトルの相手チーム再計算など、instanceを持たずmaster+level+stageのみから
-// チート防止のためステータスを導出したい場合に使う（createMonsterInstance/evolveInstanceとは別経路）。
-export function computeStatsForMasterAtLevelAndStage(master, level, evolutionStage) {
-  const stats = computeStatsAtLevel(master, level);
-  const EVOLUTION_BOOST = 1.15;
-  const stage = Math.max(0, evolutionStage || 0);
-  for (let i = 0; i < stage; i++) {
-    for (const key of ["hp", "poyoPower", "mochiDefense", "speed", "appetite", "charm"]) {
-      stats[key] = Math.round(stats[key] * EVOLUTION_BOOST);
-    }
-  }
-  return stats;
+// masterのbaseStatsからlevel成長分のみを計算する（進化差分計算・チャレンジ再計算などに使用）
+export function computeStatsForMasterAtLevel(master, level) {
+  return computeStatsAtLevel(master, level);
+}
+
+// 後方互換名: フレンドバトル等で「species + level」からステータスを導出する用途
+export function computeStatsForMasterAtLevelAndStage(master, level) {
+  return computeStatsAtLevel(master, level);
 }
 
 // パーティに追加。3体以上ならボックスへ。戻り値: { instance, wentToBox }
-export function addMonsterToPartyOrBox(monsterId, level = 1) {
-  const instance = createMonsterInstance(monsterId, level);
+export function addMonsterToPartyOrBox(speciesId, level = 1) {
+  const instance = createMonsterInstance(speciesId, level);
   if (!instance) return null;
   if (state.party.length < 3) {
     state.party.push(instance);
   } else {
     state.box.push(instance);
   }
-  discoverMonster(monsterId, { captured: true });
-  updateDexMaxLevel(monsterId, level);
+  discoverMonster(speciesId, { owned: true });
+  updateDexMaxLevel(speciesId, level);
   return instance;
 }
 
@@ -223,43 +204,43 @@ export function findInstanceById(instanceId) {
 
 // ---------- 図鑑 ----------
 
-export function discoverMonster(monsterId, { captured = false } = {}) {
-  // dexに存在しないモンスターIDは無視（存在しないモンスター定義は登録しない）
-  if (!getMonsterMaster(monsterId)) return;
-  const key = String(monsterId);
+export function discoverMonster(speciesId, { owned = false } = {}) {
+  // dexに存在しないspeciesIdは無視（存在しない種の定義は登録しない）
+  if (!getMonsterMaster(speciesId)) return;
+  const key = String(speciesId);
   const entry = state.dex[key] || {
     seen: false,
-    captured: false,
+    owned: false,
     seenCount: 0,
-    capturedCount: 0,
+    ownedCount: 0,
     maxLevel: 0,
   };
   entry.seen = true;
-  if (captured) {
-    // 捕獲時は遭遇時に既にseenCountを加算済みなので二重カウントしない
-    entry.captured = true;
-    entry.capturedCount = (entry.capturedCount || 0) + 1;
+  if (owned) {
+    // 捕獲/進化時は遭遇時に既にseenCountを加算済みなので二重カウントしない
+    entry.owned = true;
+    entry.ownedCount = (entry.ownedCount || 0) + 1;
   } else {
     entry.seenCount = (entry.seenCount || 0) + 1;
   }
   state.dex[key] = entry;
 }
 
-export function updateDexMaxLevel(monsterId, level) {
-  const key = String(monsterId);
+export function updateDexMaxLevel(speciesId, level) {
+  const key = String(speciesId);
   const entry = state.dex[key];
   if (!entry) return;
   entry.maxLevel = Math.max(entry.maxLevel || 0, level);
 }
 
-export function getDexEntry(monsterId) {
-  const key = String(monsterId);
+export function getDexEntry(speciesId) {
+  const key = String(speciesId);
   return (
     state.dex[key] || {
       seen: false,
-      captured: false,
+      owned: false,
       seenCount: 0,
-      capturedCount: 0,
+      ownedCount: 0,
       maxLevel: 0,
     }
   );
@@ -329,53 +310,62 @@ export function gainExp(instance, expAmount) {
     needed = expToNextLevel(instance.level);
   }
   if (levelUps > 0) {
-    updateDexMaxLevel(instance.monsterId, instance.level);
+    updateDexMaxLevel(instance.speciesId, instance.level);
   }
   return levelUps;
 }
 
-// ---------- 進化（forms対応・多段進化サポート） ----------
+// ---------- 進化（species方式・通常/ボス両対応） ----------
 
-// 現在のformの次(stage+1)が存在し、そのconditionLevelをlevelが満たしていればtrue
+// 現在のspeciesに evolvesTo があり、evolveCondition.level をlevelが満たしていればtrue。
+// ボス進化(itemId指定あり)はさらにアイテム所持数が1以上必要。
 export function canEvolve(instance) {
-  const master = getMonsterMaster(instance.monsterId);
-  if (!master || !Array.isArray(master.forms)) return false;
-  const currentStage = instance.evolutionStage || 0;
-  const nextForm = master.forms.find((f) => f.evolutionStage === currentStage + 1);
-  if (!nextForm) return false;
-  return instance.level >= nextForm.conditionLevel;
+  const master = getMonsterMaster(instance.speciesId);
+  if (!master || !master.evolvesTo || !master.evolveCondition) return false;
+  if (instance.level < master.evolveCondition.level) return false;
+  if (master.evolveCondition.itemId && getItemCount(master.evolveCondition.itemId) <= 0) return false;
+  return true;
 }
 
-// 進化実行: ニックネームを次formの名前に変更し、ステータスを+15%程度底上げ、evolutionStageを進める
+// 進化実行: instance.speciesIdをevolvesToに変更し、nicknameが旧種名のままなら新種名に更新。
+// ステータスは「現在stats - 旧speciesのレベル成長理論値」の差分（ごはん育成分）を保持し、
+// 新speciesのレベル成長理論値に差分を加算して再計算する。currentHpは最大HPまで回復（確定仕様v0.4）。
+// ボス進化はさらにevolveCondition.itemIdのアイテムを1個消費する。
 export function evolveInstance(instance) {
-  const master = getMonsterMaster(instance.monsterId);
-  if (!master || !Array.isArray(master.forms)) return null;
-  const currentStage = instance.evolutionStage || 0;
-  const nextForm = master.forms.find((f) => f.evolutionStage === currentStage + 1);
-  if (!nextForm) return null;
+  const fromMaster = getMonsterMaster(instance.speciesId);
+  if (!fromMaster || !fromMaster.evolvesTo || !fromMaster.evolveCondition) return null;
+  const toMaster = getMonsterMaster(fromMaster.evolvesTo);
+  if (!toMaster) return null;
 
-  const evolvedName = nextForm.name;
-  const hpRatio = instance.stats.hp > 0 ? instance.currentHp / instance.stats.hp : 1;
+  if (instance.level < fromMaster.evolveCondition.level) return null;
+  const itemId = fromMaster.evolveCondition.itemId;
+  if (itemId) {
+    if (getItemCount(itemId) <= 0) return null;
+    useItem(itemId);
+  }
 
-  const EVOLUTION_BOOST = 1.15; // TODO: 仮置きの進化ステータス倍率（仕様書は「少し上げる」の目安のみ規定）
+  // ごはん育成分の差分を維持したまま新speciesの理論値に載せ替える
+  const fromTheoretical = computeStatsAtLevel(fromMaster, instance.level);
+  const toTheoretical = computeStatsAtLevel(toMaster, instance.level);
+  const newStats = {};
   for (const key of ["hp", "poyoPower", "mochiDefense", "speed", "appetite", "charm"]) {
-    instance.stats[key] = Math.round(instance.stats[key] * EVOLUTION_BOOST);
-  }
-  instance.currentHp = Math.max(1, Math.round(instance.stats.hp * hpRatio));
-  instance.nickname = evolvedName;
-  instance.evolutionStage = nextForm.evolutionStage;
-  instance.evolved = instance.evolutionStage > 0;
-
-  // 図鑑に進化情報を記録（進化済みであることをdexエントリにも残す）
-  const key = String(instance.monsterId);
-  const entry = state.dex[key];
-  if (entry) {
-    entry.evolved = true;
-    entry.evolvedName = evolvedName;
-    entry.evolvedStage = nextForm.evolutionStage;
+    const grownDiff = (instance.stats[key] || 0) - (fromTheoretical[key] || 0);
+    newStats[key] = Math.max(1, Math.round((toTheoretical[key] || 0) + grownDiff));
   }
 
-  return { evolvedName, master, form: nextForm };
+  const wasDefaultName = instance.nickname === fromMaster.name;
+  instance.stats = newStats;
+  instance.currentHp = newStats.hp; // 確定仕様v0.4: 進化時は最大HPまで回復する
+  instance.speciesId = toMaster.speciesId;
+  if (wasDefaultName || !instance.nickname) {
+    instance.nickname = toMaster.name;
+  }
+
+  // 進化先speciesを図鑑に登録（seen + owned）
+  discoverMonster(toMaster.speciesId, { owned: true });
+  updateDexMaxLevel(toMaster.speciesId, instance.level);
+
+  return { evolvedName: toMaster.name, master: toMaster };
 }
 
 // ---------- ステージ解放 ----------
@@ -414,7 +404,7 @@ export function applyFoodToInstance(instance, item) {
 export function getPartyWithMaster() {
   return state.party.map((instance) => ({
     instance,
-    master: getMonsterMaster(instance.monsterId),
+    master: getMonsterMaster(instance.speciesId),
   }));
 }
 
@@ -472,7 +462,7 @@ export function releaseFromBox(instanceId) {
   const idx = state.box.findIndex((m) => m.instanceId === instanceId);
   if (idx === -1) return null;
   const instance = state.box[idx];
-  const master = getMonsterMaster(instance.monsterId);
+  const master = getMonsterMaster(instance.speciesId);
   const rarityBonus = master ? RELEASE_RARITY_BONUS[master.rarity] || 0 : 0;
   const goldGain = 20 + instance.level * 8 + rarityBonus;
 

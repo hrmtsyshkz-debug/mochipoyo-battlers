@@ -8,7 +8,6 @@ import {
   releaseFromBox,
   getItem,
   saveGame,
-  getFormForInstance,
 } from "../state.js";
 import { monsterAvatarHtml, showToast, displayName, escapeHtml } from "../ui.js";
 import { openShareOverlay } from "./share.js";
@@ -50,12 +49,11 @@ function renderPartyList(navigate) {
 
   listEl.innerHTML = "";
   state.party.forEach((instance, idx) => {
-    const master = getMonsterMaster(instance.monsterId);
-    const form = getFormForInstance(master, instance);
+    const master = getMonsterMaster(instance.speciesId);
     const card = document.createElement("div");
     card.className = "party-slot-card";
     card.innerHTML = `
-      ${monsterAvatarHtml(master, { form })}
+      ${monsterAvatarHtml(master)}
       <div class="party-slot-info">
         <div class="monster-name">${escapeHtml(displayName(instance, master))}</div>
         <div class="monster-level">Lv.${instance.level}　HP ${Math.max(0, instance.currentHp)}/${instance.stats.hp}</div>
@@ -108,13 +106,12 @@ function renderBoxList(navigate) {
 
   listEl.innerHTML = "";
   state.box.forEach((instance) => {
-    const master = getMonsterMaster(instance.monsterId);
-    const form = getFormForInstance(master, instance);
+    const master = getMonsterMaster(instance.speciesId);
     const card = document.createElement("div");
     card.className = "party-slot-card";
     const partyFull = state.party.length >= 3;
     card.innerHTML = `
-      ${monsterAvatarHtml(master, { form })}
+      ${monsterAvatarHtml(master)}
       <div class="party-slot-info">
         <div class="monster-name">${escapeHtml(displayName(instance, master))}</div>
         <div class="monster-level">Lv.${instance.level}　HP ${Math.max(0, instance.currentHp)}/${instance.stats.hp}</div>

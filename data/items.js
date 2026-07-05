@@ -166,4 +166,33 @@ export const items = [
     },
     description: '軽快なジャンクパワーで元気になる。',
   },
+  // ---------- ボス進化アイテム（ショップには並べない。priceフィールドを持たせないことで陳列から除外する） ----------
+  {
+    id: 'mochi_boss_ribbon',
+    name: 'もち印のリボン',
+    type: 'evolution',
+    emoji: '🎀',
+    description: 'もちもちボスがつけていた、やさしい香りのするリボン。モチーナのボスしんかに使う。',
+  },
+  {
+    id: 'sugar_ring',
+    name: 'シュガーリング',
+    type: 'evolution',
+    emoji: '🍩',
+    description: 'くるくる回るボスが落とした、砂糖でできた輪っか。ドーナツンのボスしんかに使う。',
+  },
+  {
+    id: 'kongari_medal',
+    name: 'こんがり勲章',
+    type: 'evolution',
+    emoji: '🏅',
+    description: '焼肉街のボスにささげられた、こんがり輝く勲章。ヤキニクマルのボスしんかに使う。',
+  },
+  {
+    id: 'fullness_crown',
+    name: '満腹の王冠',
+    type: 'evolution',
+    emoji: '👑',
+    description: '伝説のビュッフェを制した証の王冠。ビュッフェリアのボスしんかに使う。',
+  },
 ]

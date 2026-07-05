@@ -1,12 +1,12 @@
 // 進化演出オーバーレイ
 import { monsterFullArtHtml } from "../ui.js";
 
-// evolvedInfo: { evolvedName, master, form } (master = 図鑑マスタ, form = 進化後のform)
+// evolvedInfo: { evolvedName, master }（master = 進化先speciesのマスタデータ）
 export function showEvolution(evolvedInfo, onDone) {
-  const { evolvedName, master, form } = evolvedInfo;
+  const { evolvedName, master } = evolvedInfo;
   const overlay = document.getElementById("evolution-overlay");
   overlay.innerHTML = `
-    ${monsterFullArtHtml(master, form)}
+    ${monsterFullArtHtml(master)}
     <h1>おや...？ようすが...</h1>
     <h2>${evolvedName}に しんかした！</h2>
     <p>${master.description}</p>

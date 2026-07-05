@@ -1,6 +1,6 @@
 // 探索画面
 import { stages } from "../../data/stages.js";
-import { monsters } from "../../data/monsters.js";
+import { species } from "../../data/monsters.js";
 import { getState, isStageUnlocked, saveGame } from "../state.js";
 import { showToast, monsterImageInnerHtml } from "../ui.js";
 
@@ -78,9 +78,9 @@ function renderActions(navigate) {
 
 function pickEnemyMonster(stage, isBoss) {
   if (isBoss) {
-    return monsters.find((m) => m.id === stage.bossMonsterId) || null;
+    return species.find((s) => s.speciesId === stage.bossSpeciesId) || null;
   }
-  const candidates = stage.enemyMonsterIds.map((id) => monsters.find((m) => m.id === id)).filter(Boolean);
+  const candidates = stage.enemySpeciesIds.map((id) => species.find((s) => s.speciesId === id)).filter(Boolean);
   if (candidates.length === 0) return null;
   return candidates[Math.floor(Math.random() * candidates.length)];
 }
@@ -115,15 +115,13 @@ function startExploration(stage, navigate, isBoss) {
 
     const level = isBoss ? Math.max(1, stage.recommendedLevel) : randomLevelAround(stage.recommendedLevel);
 
-    const enemyBaseForm =
-      Array.isArray(enemyMaster.forms) ? enemyMaster.forms.find((f) => f.evolutionStage === 0) : null;
     log.innerHTML = `
-      <div class="explore-emoji">${monsterImageInnerHtml(enemyMaster, enemyBaseForm, "icon")}</div>
+      <div class="explore-emoji">${monsterImageInnerHtml(enemyMaster, "icon")}</div>
       <p>${isBoss ? "ボスの " : "やせいの "}${enemyMaster.name}が あらわれた！</p>
     `;
 
     setTimeout(() => {
-      navigate("battle", { enemyMonsterId: enemyMaster.id, enemyLevel: level, stage, isBoss });
+      navigate("battle", { enemySpeciesId: enemyMaster.speciesId, enemyLevel: level, stage, isBoss });
     }, 900);
   }, 700);
 }

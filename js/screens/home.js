@@ -1,6 +1,6 @@
 // ホーム画面
 import { stages } from "../../data/stages.js";
-import { getState, getPartyWithMaster, canEvolve, reviveFaintedParty, saveGame, getFormForInstance } from "../state.js";
+import { getState, getPartyWithMaster, canEvolve, reviveFaintedParty, saveGame } from "../state.js";
 import { monsterAvatarHtml, displayName, escapeHtml } from "../ui.js";
 import { getPendingChallenge, clearPendingChallenge } from "../main.js";
 
@@ -81,9 +81,8 @@ export function renderHome(navigate) {
     partyInfo.forEach(({ instance, master }) => {
       const card = document.createElement("div");
       card.className = "monster-card";
-      const form = getFormForInstance(master, instance);
       card.innerHTML = `
-        ${monsterAvatarHtml(master, { form })}
+        ${monsterAvatarHtml(master)}
         <div class="monster-name">${displayName(instance, master)}</div>
         <div class="monster-level">Lv.${instance.level}</div>
         ${canEvolve(instance) ? `<div class="evolve-tag">しんか！</div>` : ""}

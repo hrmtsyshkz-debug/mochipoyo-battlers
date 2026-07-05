@@ -4,13 +4,13 @@ import {
   getState,
   getPartyWithMaster,
   getMonsterMaster,
+  getItem,
   getItemCount,
   useItem,
   applyFoodToInstance,
   canEvolve,
   evolveInstance,
   saveGame,
-  getFormForInstance,
 } from "../state.js";
 import { monsterAvatarHtml, monsterFullArtHtml, showToast, displayName } from "../ui.js";
 import { showEvolution } from "./evolution.js";
@@ -23,7 +23,7 @@ function getAllOwnedWithMaster() {
   const partyInfo = getPartyWithMaster();
   const boxInfo = state.box.map((instance) => ({
     instance,
-    master: getMonsterMaster(instance.monsterId),
+    master: getMonsterMaster(instance.speciesId),
     inBox: true,
   }));
   return [...partyInfo, ...boxInfo];
@@ -65,9 +65,8 @@ export function renderRaise(navigate) {
   partyInfo.forEach(({ instance, master, inBox }) => {
     const card = document.createElement("div");
     card.className = "monster-card" + (instance.instanceId === selectedInstanceId ? " selected" : "");
-    const form = getFormForInstance(master, instance);
     card.innerHTML = `
-      ${monsterAvatarHtml(master, { form })}
+      ${monsterAvatarHtml(master)}
       <div class="monster-name">${displayName(instance, master)}</div>
       <div class="monster-level">Lv.${instance.level}${inBox ? " 📦" : ""}</div>
       ${canEvolve(instance) ? `<div class="evolve-tag">しんか！</div>` : ""}
@@ -92,22 +91,31 @@ function renderDetail(navigate) {
   const needed = 20 + instance.level * 10;
   const expPct = Math.min(100, Math.round((instance.exp / needed) * 100));
   const evolvable = canEvolve(instance);
-  const currentForm = getFormForInstance(master, instance);
-  const currentStage = instance.evolutionStage || 0;
-  const nextForm = Array.isArray(master.forms) ? master.forms.find((f) => f.evolutionStage === currentStage + 1) : null;
+  const nextMaster = master.evolvesTo ? getMonsterMaster(master.evolvesTo) : null;
 
   let evolveSectionHtml = "";
-  if (nextForm) {
-    evolveSectionHtml = evolvable
-      ? `<button class="btn btn-yellow btn-block" id="btn-evolve">✨ ${nextForm.name}に しんかする！ ✨</button>`
-      : `<p class="hint-text">しんか条件: Lv.${nextForm.conditionLevel}（${nextForm.name}へ）</p>`;
-  } else if (Array.isArray(master.forms) && master.forms.length > 1) {
+  if (nextMaster && master.evolveCondition) {
+    const isBossEvolution = !!master.evolveCondition.itemId;
+    if (isBossEvolution) {
+      const evoItem = getItem(master.evolveCondition.itemId);
+      const itemName = evoItem ? evoItem.name : master.evolveCondition.itemId;
+      const itemEmoji = evoItem && evoItem.emoji ? evoItem.emoji : "🎁";
+      const itemCount = getItemCount(master.evolveCondition.itemId);
+      evolveSectionHtml = evolvable
+        ? `<button class="btn btn-yellow btn-block" id="btn-evolve">✨ ${nextMaster.name}に ボスしんか！（${itemEmoji}${itemName}をつかう）✨</button>`
+        : `<p class="hint-text">しんか条件: Lv.${master.evolveCondition.level} + ${itemEmoji}${itemName} が ひつよう（もちもの: ${itemCount}こ）</p>`;
+    } else {
+      evolveSectionHtml = evolvable
+        ? `<button class="btn btn-yellow btn-block" id="btn-evolve">✨ ${nextMaster.name}に しんかする！ ✨</button>`
+        : `<p class="hint-text">しんか条件: Lv.${master.evolveCondition.level}（${nextMaster.name}へ）</p>`;
+    }
+  } else if (master.evolvesFrom) {
     evolveSectionHtml = `<p class="hint-text">✨ しんかずみ</p>`;
   }
 
   wrap.innerHTML = `
     <div class="raise-detail">
-      ${monsterFullArtHtml(master, currentForm)}
+      ${monsterFullArtHtml(master)}
       <h2>${displayName(instance, master)}</h2>
       <p>Lv.${instance.level}　HP ${Math.max(0, instance.currentHp)} / ${instance.stats.hp}</p>
       <div class="exp-bar-outer"><div class="exp-bar-inner" style="width:${expPct}%;"></div></div>

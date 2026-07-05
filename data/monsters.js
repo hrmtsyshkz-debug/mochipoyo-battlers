@@ -1,11 +1,18 @@
-// モンスターデータ（仕様書 v0.2 準拠、20体）
-// forms: 進化形態の配列。evolutionStage 0 が基本形態。conditionLevel はその形態になれるレベル（stage 0 は null）。
+// モンスターデータ（ポケモン方式: 1進化形態 = 1図鑑枠 = 1species。30種）
+// 各レコードは「1つの見た目・1つのdexNo」を持つ独立した種(species)。
+// evolvesFrom/evolvesTo は speciesId 参照。evolveCondition は evolvesTo がある場合のみ持つ。
+//   level: 到達で進化可能になるレベル
+//   itemId: ボス系統のみ。進化時にこのアイテムを1個消費する（通常種はnull）
 // images.icon / images.full は納品済みパスのみ設定し、未納品は null（ui.js側でフォールバックする）。
-export const monsters = [
+export const species = [
+  // ---------- ポヨリン系統（スターター） ----------
   {
-    id: 1,
+    speciesId: 1,
     dexNo: '001',
+    lineId: 'poyorin_line',
+    evolutionStage: 0,
     name: 'ポヨリン',
+    emoji: '🍰',
     element: ['甘味'],
     role: 'バランス',
     rarity: 'S',
@@ -13,7 +20,6 @@ export const monsters = [
     classification: 'もちぽよ精霊',
     favoriteFood: 'いちごショート',
     habitat: ['商店街'],
-    emoji: '🍰',
     baseCaptureRate: 0.55,
     baseStats: {
       hp: 32,
@@ -24,35 +30,88 @@ export const monsters = [
       charm: 14,
     },
     skills: ['poyo_tackle', 'mochi_guard', 'snack_charge'],
-    forms: [
-      {
-        formId: 'poyorin',
-        name: 'ポヨリン',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: {
-          icon: 'assets/monsters/icon/001_poyorin.png',
-          full: 'assets/monsters/full/001_poyorin.png',
-        },
-      },
-      {
-        formId: 'poyorina',
-        name: 'ポヨリーナ',
-        evolutionStage: 1,
-        conditionLevel: 8,
-        images: {
-          icon: null,
-          full: 'assets/monsters/full/001_poyorina.png',
-        },
-      },
-    ],
     description:
       '丸いほっぺとふわふわのお腹が特徴のもちぽよ。緊張するとぷるぷる震えるが、仲間のためなら一生懸命ふんばる。',
+    evolvesFrom: null,
+    evolvesTo: 2,
+    evolveCondition: { level: 8, itemId: null }, // TODO: スターター進化レベルは仮置き（仕様書に明記なし）
+    images: { icon: null, full: null },
   },
   {
-    id: 2,
+    speciesId: 2,
     dexNo: '002',
+    lineId: 'poyorin_line',
+    evolutionStage: 1,
+    name: 'ポヨリッチ',
+    emoji: '🧁',
+    element: ['甘味'],
+    role: 'バランス',
+    rarity: 'M', // TODO: 進化元(S)より1段階上に仮置き
+    poyoRank: 'M',
+    classification: 'もちぽよ精霊',
+    favoriteFood: 'いちごショート',
+    habitat: ['商店街'],
+    baseCaptureRate: 0.385, // TODO: 進化元baseCaptureRateの×0.7目安で仮置き
+    baseStats: {
+      // TODO: 進化元(ポヨリン)基準 ×1.35 目安で仮置き（バランス型なので均等寄せ）
+      hp: 43,
+      poyoPower: 15,
+      mochiDefense: 14,
+      speed: 11,
+      appetite: 16,
+      charm: 19,
+    },
+    skills: ['poyo_tackle', 'mochi_guard', 'snack_charge'],
+    description:
+      // TODO: チャッピー承認待ち
+      'ぷにぷにのほっぺが少し引き締まり、ふんばる力がぐんと強くなったもちぽよ。仲間を守るときの顔つきが凛々しい。',
+    evolvesFrom: 1,
+    evolvesTo: 3,
+    evolveCondition: { level: 16, itemId: null }, // TODO: スターター進化レベルは仮置き（仕様書に明記なし）
+    images: { icon: 'assets/monsters/icon/002_poyorich.png', full: 'assets/monsters/full/002_poyorich.png' },
+  },
+  {
+    speciesId: 3,
+    dexNo: '003',
+    lineId: 'poyorin_line',
+    evolutionStage: 2,
+    name: 'ポヨリーナ',
+    emoji: '🎂',
+    element: ['甘味'],
+    role: 'バランス',
+    rarity: 'L', // TODO: 進化元(M)より1段階上に仮置き
+    poyoRank: 'M',
+    classification: 'もちぽよ精霊',
+    favoriteFood: 'いちごショート',
+    habitat: ['商店街'],
+    baseCaptureRate: 0.2695, // TODO: 直前形態baseCaptureRateの×0.7目安で仮置き
+    baseStats: {
+      // TODO: 進化元(ポヨリン)基準 ×1.75 目安で仮置き
+      hp: 56,
+      poyoPower: 20,
+      mochiDefense: 18,
+      speed: 14,
+      appetite: 21,
+      charm: 25,
+    },
+    skills: ['poyo_tackle', 'mochi_guard', 'snack_charge'],
+    description:
+      // TODO: チャッピー承認待ち
+      'デコレーションケーキのような華やかな姿になったもちぽよ。頼れるリーダーとして仲間の先頭に立つ。',
+    evolvesFrom: 2,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: null, full: null },
+  },
+
+  // ---------- ラーメルン系統（スターター） ----------
+  {
+    speciesId: 4,
+    dexNo: '004',
+    lineId: 'ramerun_line',
+    evolutionStage: 0,
     name: 'ラーメルン',
+    emoji: '🍜',
     element: ['炭水'],
     role: '耐久',
     rarity: 'S',
@@ -60,7 +119,6 @@ export const monsters = [
     classification: '湯気ぽよ',
     favoriteFood: 'しょうゆラーメン',
     habitat: ['フードコート'],
-    emoji: '🍜',
     baseCaptureRate: 0.5,
     baseStats: {
       hp: 38,
@@ -71,35 +129,88 @@ export const monsters = [
       charm: 9,
     },
     skills: ['noodle_tackle', 'steam_barrier', 'second_serving_heal'],
-    forms: [
-      {
-        formId: 'ramerun',
-        name: 'ラーメルン',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: {
-          icon: 'assets/monsters/icon/002_ramerun.png',
-          full: 'assets/monsters/full/002_ramerun.png',
-        },
-      },
-      {
-        formId: 'ramerurna',
-        name: 'ラメルーナ',
-        evolutionStage: 1,
-        conditionLevel: 8,
-        images: {
-          icon: null,
-          full: 'assets/monsters/full/002_ramerurna.png',
-        },
-      },
-    ],
     description:
       'ラーメン屋の湯気から生まれたもちぽよ。いつも眠そうだが、バトルになると熱々のスープパワーで相手を押し返す。',
+    evolvesFrom: null,
+    evolvesTo: 5,
+    evolveCondition: { level: 8, itemId: null }, // TODO: スターター進化レベルは仮置き（仕様書に明記なし）
+    images: { icon: 'assets/monsters/icon/004_ramerun.png', full: 'assets/monsters/full/004_ramerun.png' },
   },
   {
-    id: 3,
-    dexNo: '003',
+    speciesId: 5,
+    dexNo: '005',
+    lineId: 'ramerun_line',
+    evolutionStage: 1,
+    name: 'ラメルーナ',
+    emoji: '🍜',
+    element: ['炭水'],
+    role: '耐久',
+    rarity: 'M', // TODO: 進化元(S)より1段階上に仮置き
+    poyoRank: 'M',
+    classification: '湯気ぽよ',
+    favoriteFood: 'しょうゆラーメン',
+    habitat: ['フードコート'],
+    baseCaptureRate: 0.35, // TODO: 進化元baseCaptureRateの×0.7目安で仮置き
+    baseStats: {
+      // TODO: 進化元(ラーメルン)基準 ×1.35 目安で仮置き（耐久型はもち耐性を厚め）
+      hp: 51,
+      poyoPower: 12,
+      mochiDefense: 19,
+      speed: 8,
+      appetite: 19,
+      charm: 12,
+    },
+    skills: ['noodle_tackle', 'steam_barrier', 'second_serving_heal'],
+    description:
+      // TODO: チャッピー承認待ち
+      'とろとろに伸びた湯気をまとうもちぽよ。ゆったりした動きだが、受け止める力はさらに強くなった。',
+    evolvesFrom: 4,
+    evolvesTo: 6,
+    evolveCondition: { level: 16, itemId: null }, // TODO: スターター進化レベルは仮置き（仕様書に明記なし）
+    images: { icon: 'assets/monsters/icon/005_rameruna.png', full: 'assets/monsters/full/005_rameruna.png' },
+  },
+  {
+    speciesId: 6,
+    dexNo: '006',
+    lineId: 'ramerun_line',
+    evolutionStage: 2,
+    name: 'ラーメリア',
+    emoji: '🍥',
+    element: ['炭水'],
+    role: '耐久',
+    rarity: 'L', // TODO: 進化元(M)より1段階上に仮置き
+    poyoRank: 'M',
+    classification: '湯気ぽよ',
+    favoriteFood: 'しょうゆラーメン',
+    habitat: ['フードコート'],
+    baseCaptureRate: 0.245, // TODO: 直前形態baseCaptureRateの×0.7目安で仮置き
+    baseStats: {
+      // TODO: 進化元(ラーメルン)基準 ×1.75 目安で仮置き
+      hp: 67,
+      poyoPower: 16,
+      mochiDefense: 25,
+      speed: 11,
+      appetite: 25,
+      charm: 16,
+    },
+    skills: ['noodle_tackle', 'steam_barrier', 'second_serving_heal'],
+    description:
+      // TODO: チャッピー承認待ち
+      '湯気の女神とも呼ばれる完成形のもちぽよ。どっしり構えるだけで仲間みんなが安心する。',
+    evolvesFrom: 5,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: null, full: null },
+  },
+
+  // ---------- カラアゲポヨ系統（スターター） ----------
+  {
+    speciesId: 7,
+    dexNo: '007',
+    lineId: 'karaage_line',
+    evolutionStage: 0,
     name: 'カラアゲポヨ',
+    emoji: '🍗',
     element: ['肉', '油'],
     role: '攻撃',
     rarity: 'S',
@@ -107,7 +218,6 @@ export const monsters = [
     classification: 'こんがりぽよ',
     favoriteFood: '唐揚げ',
     habitat: ['焼肉街'],
-    emoji: '🍗',
     baseCaptureRate: 0.5,
     baseStats: {
       hp: 30,
@@ -118,45 +228,86 @@ export const monsters = [
       charm: 10,
     },
     skills: ['rolling_attack', 'crispy_punch', 'fullness_boost'],
-    forms: [
-      {
-        formId: 'karaagepoyo',
-        name: 'カラアゲポヨ',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: {
-          icon: 'assets/monsters/icon/003_karaagepoyo.png',
-          full: 'assets/monsters/full/003_karaagepoyo.png',
-        },
-      },
-      {
-        formId: 'agepoyon',
-        name: 'アゲポヨン',
-        evolutionStage: 1,
-        conditionLevel: 8,
-        images: {
-          icon: null,
-          full: 'assets/monsters/full/003_agepoyon.png',
-        },
-      },
-      {
-        formId: 'kararina',
-        name: 'カラリーナ',
-        evolutionStage: 2,
-        conditionLevel: 16,
-        images: {
-          icon: 'assets/monsters/icon/003_kararina.png',
-          full: 'assets/monsters/full/003_kararina.png',
-        },
-      },
-    ],
     description:
       'こんがり香ばしいオーラをまとった元気いっぱいのもちぽよ。小さな体でころころ転がりながら突撃する。',
+    evolvesFrom: null,
+    evolvesTo: 8,
+    evolveCondition: { level: 8, itemId: null }, // TODO: スターター進化レベルは仮置き（仕様書に明記なし）
+    images: { icon: 'assets/monsters/icon/007_karaagepoyo.png', full: 'assets/monsters/full/007_karaagepoyo.png' },
   },
   {
-    id: 4,
-    dexNo: '004',
+    speciesId: 8,
+    dexNo: '008',
+    lineId: 'karaage_line',
+    evolutionStage: 1,
+    name: 'アゲポヨン',
+    emoji: '🍤',
+    element: ['肉', '油'],
+    role: '攻撃',
+    rarity: 'M', // TODO: 進化元(S)より1段階上に仮置き（旧データ引き継ぎ、rarityのみ新設計に合わせて明示）
+    poyoRank: 'M',
+    classification: 'こんがりぽよ',
+    favoriteFood: '唐揚げ',
+    habitat: ['焼肉街'],
+    baseCaptureRate: 0.35, // TODO: 進化元baseCaptureRateの×0.7目安で仮置き
+    baseStats: {
+      // 既存20種のゲームデータ引き継ぎ（旧forms内の同名形態の値をそのまま採用）
+      hp: 35,
+      poyoPower: 20,
+      mochiDefense: 10,
+      speed: 12,
+      appetite: 15,
+      charm: 12,
+    },
+    skills: ['rolling_attack', 'crispy_punch', 'fullness_boost'],
+    description:
+      'ころころ具合がさらに増して、揚げたてのようにパリッとした自信を持つようになったもちぽよ。',
+    evolvesFrom: 7,
+    evolvesTo: 9,
+    evolveCondition: { level: 16, itemId: null }, // TODO: スターター進化レベルは仮置き（仕様書に明記なし）
+    images: { icon: null, full: 'assets/monsters/full/008_agepoyon.png' },
+  },
+  {
+    speciesId: 9,
+    dexNo: '009',
+    lineId: 'karaage_line',
+    evolutionStage: 2,
+    name: 'カラリーナ',
+    emoji: '🍗',
+    element: ['肉', '油'],
+    role: '攻撃',
+    rarity: 'L', // TODO: 進化元(M)より1段階上に仮置き
+    poyoRank: 'M',
+    classification: 'こんがりぽよ',
+    favoriteFood: '唐揚げ',
+    habitat: ['焼肉街'],
+    baseCaptureRate: 0.245, // TODO: 直前形態baseCaptureRateの×0.7目安で仮置き
+    baseStats: {
+      // 既存20種のゲームデータ引き継ぎ（旧forms内の同名形態の値をそのまま採用）
+      hp: 40,
+      poyoPower: 26,
+      mochiDefense: 13,
+      speed: 15,
+      appetite: 17,
+      charm: 15,
+    },
+    skills: ['rolling_attack', 'crispy_punch', 'fullness_boost'],
+    description:
+      'こんがりぽよの完成形。華麗に転がりながら繰り出す一撃は、焼肉街いちの破壊力を誇る。',
+    evolvesFrom: 8,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/009_kararina.png', full: 'assets/monsters/full/009_kararina.png' },
+  },
+
+  // ---------- モチーナ系統（ボス進化） ----------
+  {
+    speciesId: 10,
+    dexNo: '010',
+    lineId: 'mochina_line',
+    evolutionStage: 0,
     name: 'モチーナ',
+    emoji: '🍡',
     element: ['和食', '甘味'],
     role: '防御',
     rarity: 'M',
@@ -164,7 +315,6 @@ export const monsters = [
     classification: 'もちもち精霊',
     favoriteFood: '大福',
     habitat: ['商店街'],
-    emoji: '🍡',
     baseCaptureRate: 0.42,
     baseStats: {
       hp: 36,
@@ -175,29 +325,55 @@ export const monsters = [
       charm: 13,
     },
     skills: ['poyo_tackle', 'mochi_guard', 'anko_heal'],
-    forms: [
-      {
-        formId: 'mochina',
-        name: 'モチーナ',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'mochimochina',
-        name: 'モチモチーナ',
-        evolutionStage: 1,
-        conditionLevel: 10,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       'つきたてのおもちのような体を持つもちぽよ。攻撃されると体がびよんと伸びて衝撃を吸収する。',
+    evolvesFrom: null,
+    evolvesTo: 11,
+    evolveCondition: { level: 10, itemId: 'mochi_boss_ribbon' },
+    images: { icon: 'assets/monsters/icon/010_mochina.png', full: 'assets/monsters/full/010_mochina.png' },
   },
   {
-    id: 5,
-    dexNo: '005',
+    speciesId: 11,
+    dexNo: '011',
+    lineId: 'mochina_line',
+    evolutionStage: 1,
+    name: 'モチモチーナ',
+    emoji: '🍡',
+    element: ['和食', '甘味'],
+    role: '防御',
+    rarity: 'L', // TODO: 進化元(M)より1段階上に仮置き
+    poyoRank: 'M',
+    classification: 'もちもち精霊',
+    favoriteFood: '大福',
+    habitat: ['商店街'],
+    baseCaptureRate: 0.294, // TODO: 進化元baseCaptureRateの×0.7目安で仮置き
+    baseStats: {
+      // TODO: 進化元(モチーナ)基準 ×1.35 目安で仮置き（防御型はもち耐性を厚め）
+      hp: 49,
+      poyoPower: 11,
+      mochiDefense: 21,
+      speed: 7,
+      appetite: 14,
+      charm: 18,
+    },
+    skills: ['poyo_tackle', 'mochi_guard', 'anko_heal'],
+    description:
+      // TODO: チャッピー承認待ち
+      'ボス級のもちもちパワーを手に入れたもちぽよ。伸びた体はどんな衝撃もふわりと受け止める。',
+    evolvesFrom: 10,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: null, full: null },
+  },
+
+  // ---------- 通常種（進化なし） ----------
+  {
+    speciesId: 12,
+    dexNo: '012',
+    lineId: 'mashumel_line',
+    evolutionStage: 0,
     name: 'マシュメル',
+    emoji: '☁️',
     element: ['甘味', '乳製'],
     role: '回復',
     rarity: 'M',
@@ -205,7 +381,6 @@ export const monsters = [
     classification: 'ふわふわ精霊',
     favoriteFood: 'マシュマロ',
     habitat: ['商店街', 'フードコート'],
-    emoji: '☁️',
     baseCaptureRate: 0.45,
     baseStats: {
       hp: 30,
@@ -216,29 +391,20 @@ export const monsters = [
       charm: 16,
     },
     skills: ['fluffy_press', 'marshmallow_heal', 'whip_barrier'],
-    forms: [
-      {
-        formId: 'mashumel',
-        name: 'マシュメル',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'mashumelun',
-        name: 'マシュメルン',
-        evolutionStage: 1,
-        conditionLevel: 10,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       '雲みたいにふわふわしたもちぽよ。泣いている仲間を見ると、そっと甘い香りで包み込む。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/012_mashumel.png', full: 'assets/monsters/full/012_mashumel.png' },
   },
   {
-    id: 6,
-    dexNo: '006',
+    speciesId: 13,
+    dexNo: '013',
+    lineId: 'potetocchi_line',
+    evolutionStage: 0,
     name: 'ポテトッチ',
+    emoji: '🍟',
     element: ['ジャンク', '油'],
     role: '攻撃',
     rarity: 'M',
@@ -246,7 +412,6 @@ export const monsters = [
     classification: 'ほくほく精霊',
     favoriteFood: 'フライドポテト',
     habitat: ['フードコート'],
-    emoji: '🍟',
     baseCaptureRate: 0.4,
     baseStats: {
       hp: 31,
@@ -257,29 +422,20 @@ export const monsters = [
       charm: 9,
     },
     skills: ['potato_rain', 'snack_trap', 'rolling_attack'],
-    forms: [
-      {
-        formId: 'potetocchi',
-        name: 'ポテトッチ',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'potetoccha',
-        name: 'ポテトッチャ',
-        evolutionStage: 1,
-        conditionLevel: 10,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       'ほくほくした気分が集まって生まれたもちぽよ。短い手で一生懸命ポテトを守っている。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/013_potetocchi.png', full: 'assets/monsters/full/013_potetocchi.png' },
   },
   {
-    id: 7,
-    dexNo: '007',
+    speciesId: 14,
+    dexNo: '014',
+    lineId: 'takoyakyun_line',
+    evolutionStage: 0,
     name: 'タコヤキュン',
+    emoji: '🐙',
     element: ['和食', '油'],
     role: 'バランス',
     rarity: 'M',
@@ -287,7 +443,6 @@ export const monsters = [
     classification: 'まんまる精霊',
     favoriteFood: 'たこ焼き',
     habitat: ['商店街'],
-    emoji: '🐙',
     baseCaptureRate: 0.43,
     baseStats: {
       hp: 34,
@@ -298,29 +453,20 @@ export const monsters = [
       charm: 12,
     },
     skills: ['takoyaki_bomb', 'dashi_barrier', 'poyo_tackle'],
-    forms: [
-      {
-        formId: 'takoyakyun',
-        name: 'タコヤキュン',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'takoyaking',
-        name: 'タコヤキング',
-        evolutionStage: 1,
-        conditionLevel: 10,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       '丸くて熱々な気持ちから生まれたもちぽよ。照れるとソースのような甘い香りがする。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/014_takoyakyun.png', full: 'assets/monsters/full/014_takoyakyun.png' },
   },
   {
-    id: 8,
-    dexNo: '008',
+    speciesId: 15,
+    dexNo: '015',
+    lineId: 'creamia_line',
+    evolutionStage: 0,
     name: 'クリーミア',
+    emoji: '🍦',
     element: ['乳製'],
     role: '回復',
     rarity: 'M',
@@ -328,7 +474,6 @@ export const monsters = [
     classification: 'クリーム精霊',
     favoriteFood: 'ソフトクリーム',
     habitat: ['フードコート'],
-    emoji: '🍦',
     baseCaptureRate: 0.38,
     baseStats: {
       hp: 33,
@@ -339,29 +484,20 @@ export const monsters = [
       charm: 17,
     },
     skills: ['milk_heal', 'cream_wave', 'whip_barrier'],
-    forms: [
-      {
-        formId: 'creamia',
-        name: 'クリーミア',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'creamium',
-        name: 'クリーミアム',
-        evolutionStage: 1,
-        conditionLevel: 11,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       'ひんやり甘いクリームの気配をまとったもちぽよ。仲間をなでるだけで少し元気にできる。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/015_creamia.png', full: 'assets/monsters/full/015_creamia.png' },
   },
   {
-    id: 9,
-    dexNo: '009',
+    speciesId: 16,
+    dexNo: '016',
+    lineId: 'chocorami_line',
+    evolutionStage: 0,
     name: 'チョコラミ',
+    emoji: '🍫',
     element: ['甘味'],
     role: '特殊攻撃',
     rarity: 'M',
@@ -369,7 +505,6 @@ export const monsters = [
     classification: 'チョコ精霊',
     favoriteFood: 'チョコレート',
     habitat: ['フードコート'],
-    emoji: '🍫',
     baseCaptureRate: 0.39,
     baseStats: {
       hp: 29,
@@ -380,29 +515,20 @@ export const monsters = [
       charm: 14,
     },
     skills: ['choco_splash', 'sugar_kiss', 'snack_charge'],
-    forms: [
-      {
-        formId: 'chocorami',
-        name: 'チョコラミ',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'chocoramia',
-        name: 'チョコラミア',
-        evolutionStage: 1,
-        conditionLevel: 11,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       '甘い香りで相手を油断させるもちぽよ。得意げな顔でチョコのしずくを飛ばす。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/016_chocorami.png', full: 'assets/monsters/full/016_chocorami.png' },
   },
   {
-    id: 10,
-    dexNo: '010',
+    speciesId: 17,
+    dexNo: '017',
+    lineId: 'udonfuwa_line',
+    evolutionStage: 0,
     name: 'ウドンフワ',
+    emoji: '🍥',
     element: ['炭水', '和食'],
     role: '耐久',
     rarity: 'M',
@@ -410,7 +536,6 @@ export const monsters = [
     classification: 'ふわ麺精霊',
     favoriteFood: 'うどん',
     habitat: ['商店街'],
-    emoji: '🍥',
     baseCaptureRate: 0.41,
     baseStats: {
       hp: 40,
@@ -421,29 +546,20 @@ export const monsters = [
       charm: 10,
     },
     skills: ['udon_slap', 'donburi_guard', 'second_serving_heal'],
-    forms: [
-      {
-        formId: 'udonfuwa',
-        name: 'ウドンフワ',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'udonfuwari',
-        name: 'ウドンフワリ',
-        evolutionStage: 1,
-        conditionLevel: 11,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       'ふわふわの湯気と一緒に現れるもちぽよ。のんびり屋だが、守りはとても固い。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/017_udonfuwa.png', full: 'assets/monsters/full/017_udonfuwa.png' },
   },
   {
-    id: 11,
-    dexNo: '011',
+    speciesId: 18,
+    dexNo: '018',
+    lineId: 'currycororin_line',
+    evolutionStage: 0,
     name: 'カレーコロリン',
+    emoji: '🍛',
     element: ['激辛', '炭水'],
     role: '攻撃',
     rarity: 'L',
@@ -451,7 +567,6 @@ export const monsters = [
     classification: 'スパイス精霊',
     favoriteFood: 'カレーライス',
     habitat: ['フードコート'],
-    emoji: '🍛',
     baseCaptureRate: 0.3,
     baseStats: {
       hp: 34,
@@ -462,29 +577,20 @@ export const monsters = [
       charm: 8,
     },
     skills: ['spice_shot', 'hot_charge', 'rolling_attack'],
-    forms: [
-      {
-        formId: 'currycororin',
-        name: 'カレーコロリン',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'curryrolling',
-        name: 'カレーローリング',
-        evolutionStage: 1,
-        conditionLevel: 12,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       'スパイスの元気から生まれたもちぽよ。転がるたびに、ぴりっとした香りが広がる。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/018_currycororin.png', full: 'assets/monsters/full/018_currycororin.png' },
   },
   {
-    id: 12,
-    dexNo: '012',
+    speciesId: 19,
+    dexNo: '019',
+    lineId: 'hambagumy_line',
+    evolutionStage: 0,
     name: 'ハンバグミー',
+    emoji: '🍔',
     element: ['肉'],
     role: '攻撃',
     rarity: 'L',
@@ -492,7 +598,6 @@ export const monsters = [
     classification: 'ジューシー精霊',
     favoriteFood: 'ハンバーグ',
     habitat: ['焼肉街'],
-    emoji: '🍔',
     baseCaptureRate: 0.3,
     baseStats: {
       hp: 36,
@@ -503,29 +608,20 @@ export const monsters = [
       charm: 9,
     },
     skills: ['juicy_punch', 'meat_impact', 'fullness_boost'],
-    forms: [
-      {
-        formId: 'hambagumy',
-        name: 'ハンバグミー',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'hambagrande',
-        name: 'ハンバグランデ',
-        evolutionStage: 1,
-        conditionLevel: 12,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       'ジューシーな幸せがぎゅっと詰まったもちぽよ。小さな手で一生懸命パンチする。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/019_hambagumy.png', full: 'assets/monsters/full/019_hambagumy.png' },
   },
   {
-    id: 13,
-    dexNo: '013',
+    speciesId: 20,
+    dexNo: '020',
+    lineId: 'anmitsune_line',
+    evolutionStage: 0,
     name: 'アンミツネ',
+    emoji: '🍵',
     element: ['和食', '甘味'],
     role: 'かわいさ特化',
     rarity: 'L',
@@ -533,7 +629,6 @@ export const monsters = [
     classification: '甘味きつね',
     favoriteFood: 'あんみつ',
     habitat: ['商店街'],
-    emoji: '🍵',
     baseCaptureRate: 0.28,
     baseStats: {
       hp: 31,
@@ -544,29 +639,20 @@ export const monsters = [
       charm: 19,
     },
     skills: ['sugar_kiss', 'anko_heal', 'charm_wink'],
-    forms: [
-      {
-        formId: 'anmitsune',
-        name: 'アンミツネ',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'anmitsuneko',
-        name: 'アンミツネコ',
-        evolutionStage: 1,
-        conditionLevel: 12,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       '和菓子屋の奥に現れる、きつね耳のもちぽよ。かわいい顔で相手を油断させ、ぷにっとした一撃を決める。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/020_anmitsune.png', full: 'assets/monsters/full/020_anmitsune.png' },
   },
   {
-    id: 14,
-    dexNo: '014',
+    speciesId: 21,
+    dexNo: '021',
+    lineId: 'milkura_line',
+    evolutionStage: 0,
     name: 'ミルクラ',
+    emoji: '🥛',
     element: ['乳製'],
     role: '防御/回復',
     rarity: 'L',
@@ -574,7 +660,6 @@ export const monsters = [
     classification: 'ミルク精霊',
     favoriteFood: 'ほっとミルク',
     habitat: ['フードコート'],
-    emoji: '🥛',
     baseCaptureRate: 0.32,
     baseStats: {
       hp: 38,
@@ -585,29 +670,22 @@ export const monsters = [
       charm: 16,
     },
     skills: ['milk_heal', 'cheese_shield', 'mochi_guard'],
-    forms: [
-      {
-        formId: 'milkura',
-        name: 'ミルクラ',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'milkurara',
-        name: 'ミルクララ',
-        evolutionStage: 1,
-        conditionLevel: 12,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       'やさしいミルクの香りをまとったもちぽよ。仲間の前に出て、ふわっと守ってくれる。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/021_milkura.png', full: 'assets/monsters/full/021_milkura.png' },
   },
+
+  // ---------- ドーナツン系統（ボス進化） ----------
   {
-    id: 15,
-    dexNo: '015',
+    speciesId: 22,
+    dexNo: '022',
+    lineId: 'donutsun_line',
+    evolutionStage: 0,
     name: 'ドーナツン',
+    emoji: '🍩',
     element: ['甘味', '油'],
     role: 'トリッキー',
     rarity: 'L',
@@ -615,7 +693,6 @@ export const monsters = [
     classification: 'くるくる精霊',
     favoriteFood: 'ドーナツ',
     habitat: ['フードコート'],
-    emoji: '🍩',
     baseCaptureRate: 0.25,
     baseStats: {
       hp: 33,
@@ -626,29 +703,54 @@ export const monsters = [
       charm: 14,
     },
     skills: ['donut_spin', 'sugar_kiss', 'snack_trap'],
-    forms: [
-      {
-        formId: 'donutsun',
-        name: 'ドーナツン',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'donutsia',
-        name: 'ドーナツィア',
-        evolutionStage: 1,
-        conditionLevel: 13,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       'くるくる回るのが大好きなもちぽよ。楽しそうに回っているうちに、相手も目を回してしまう。',
+    evolvesFrom: null,
+    evolvesTo: 23,
+    evolveCondition: { level: 14, itemId: 'sugar_ring' },
+    images: { icon: 'assets/monsters/icon/022_donutsun.png', full: 'assets/monsters/full/022_donutsun.png' },
   },
   {
-    id: 16,
-    dexNo: '016',
+    speciesId: 23,
+    dexNo: '023',
+    lineId: 'donutsun_line',
+    evolutionStage: 1,
+    name: 'ドーナツィア',
+    emoji: '🍩',
+    element: ['甘味', '油'],
+    role: 'トリッキー',
+    rarity: 'XL', // TODO: 進化元(L)より1段階上に仮置き
+    poyoRank: 'L',
+    classification: 'くるくる精霊',
+    favoriteFood: 'ドーナツ',
+    habitat: ['フードコート'],
+    baseCaptureRate: 0.175, // TODO: 進化元baseCaptureRateの×0.7目安で仮置き
+    baseStats: {
+      // TODO: 進化元(ドーナツン)基準 ×1.35 目安で仮置き（トリッキー型はすばやさを厚め）
+      hp: 45,
+      poyoPower: 18,
+      mochiDefense: 12,
+      speed: 20,
+      appetite: 18,
+      charm: 19,
+    },
+    skills: ['donut_spin', 'sugar_kiss', 'snack_trap'],
+    description:
+      // TODO: チャッピー承認待ち
+      'ボス級のくるくるパワーで華麗に舞うもちぽよ。回転が速すぎて残像が甘い香りを残す。',
+    evolvesFrom: 22,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: null, full: null },
+  },
+
+  {
+    speciesId: 24,
+    dexNo: '024',
+    lineId: 'conbinya_line',
+    evolutionStage: 0,
     name: 'コンビニャ',
+    emoji: '🛍️',
     element: ['ジャンク'],
     role: 'アイテム型',
     rarity: 'XL',
@@ -656,7 +758,6 @@ export const monsters = [
     classification: '深夜ぽよ',
     favoriteFood: 'ホットスナック',
     habitat: ['フードコート'],
-    emoji: '🛍️',
     baseCaptureRate: 0.22,
     baseStats: {
       hp: 35,
@@ -667,29 +768,20 @@ export const monsters = [
       charm: 13,
     },
     skills: ['midnight_tension', 'snack_trap', 'potato_rain'],
-    forms: [
-      {
-        formId: 'conbinya',
-        name: 'コンビニャ',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'conbinyan',
-        name: 'コンビニャン',
-        evolutionStage: 1,
-        conditionLevel: 14,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       '深夜のコンビニにふらっと現れるもちぽよ。新商品を見つけるのが得意で、たまに珍しいものを拾ってくる。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/024_conbinya.png', full: 'assets/monsters/full/024_conbinya.png' },
   },
   {
-    id: 17,
-    dexNo: '017',
+    speciesId: 25,
+    dexNo: '025',
+    lineId: 'cheesemoco_line',
+    evolutionStage: 0,
     name: 'チーズモコ',
+    emoji: '🧀',
     element: ['乳製', '油'],
     role: '防御',
     rarity: 'XL',
@@ -697,7 +789,6 @@ export const monsters = [
     classification: 'とろけ精霊',
     favoriteFood: 'チーズ',
     habitat: ['焼肉街'],
-    emoji: '🧀',
     baseCaptureRate: 0.22,
     baseStats: {
       hp: 42,
@@ -708,29 +799,20 @@ export const monsters = [
       charm: 12,
     },
     skills: ['cheese_shield', 'cream_wave', 'mochi_guard'],
-    forms: [
-      {
-        formId: 'cheesemoco',
-        name: 'チーズモコ',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'cheesemocomoco',
-        name: 'チーズモコモコ',
-        evolutionStage: 1,
-        conditionLevel: 14,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       'とろけるチーズみたいなやわらかさを持つもちぽよ。動きはゆっくりだが、守りはとても頼もしい。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/025_cheesemoco.png', full: 'assets/monsters/full/025_cheesemoco.png' },
   },
   {
-    id: 18,
-    dexNo: '018',
+    speciesId: 26,
+    dexNo: '026',
+    lineId: 'parferia_line',
+    evolutionStage: 0,
     name: 'パフェリア',
+    emoji: '🍨',
     element: ['甘味', '乳製'],
     role: '回復/魅了',
     rarity: 'XL',
@@ -738,7 +820,6 @@ export const monsters = [
     classification: 'パフェ精霊',
     favoriteFood: 'フルーツパフェ',
     habitat: ['フードコート'],
-    emoji: '🍨',
     baseCaptureRate: 0.2,
     baseStats: {
       hp: 36,
@@ -749,29 +830,22 @@ export const monsters = [
       charm: 21,
     },
     skills: ['cream_wave', 'sugar_kiss', 'marshmallow_heal'],
-    forms: [
-      {
-        formId: 'parferia',
-        name: 'パフェリア',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'parferianne',
-        name: 'パフェリアーヌ',
-        evolutionStage: 1,
-        conditionLevel: 14,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       '色とりどりの甘い幸せから生まれたもちぽよ。いるだけで場がぱっと華やかになる。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/026_parferia.png', full: 'assets/monsters/full/026_parferia.png' },
   },
+
+  // ---------- ヤキニクマル系統（ボス進化） ----------
   {
-    id: 19,
-    dexNo: '019',
+    speciesId: 27,
+    dexNo: '027',
+    lineId: 'yakinikumaru_line',
+    evolutionStage: 0,
     name: 'ヤキニクマル',
+    emoji: '🥩',
     element: ['肉', '油'],
     role: '高火力',
     rarity: 'XXL',
@@ -779,7 +853,6 @@ export const monsters = [
     classification: '焼肉精霊',
     favoriteFood: '焼肉',
     habitat: ['焼肉街'],
-    emoji: '🥩',
     baseCaptureRate: 0.15,
     baseStats: {
       hp: 46,
@@ -790,29 +863,55 @@ export const monsters = [
       charm: 11,
     },
     skills: ['yaki_impact', 'meat_impact', 'fullness_boost'],
-    forms: [
-      {
-        formId: 'yakinikumaru',
-        name: 'ヤキニクマル',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-      {
-        formId: 'yakinikudon',
-        name: 'ヤキニクドン',
-        evolutionStage: 1,
-        conditionLevel: 16,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       '香ばしい満腹パワーをまとったもちぽよ。普段はおっとりしているが、本気の一撃はとても重い。',
+    evolvesFrom: null,
+    evolvesTo: 28,
+    evolveCondition: { level: 18, itemId: 'kongari_medal' },
+    images: { icon: 'assets/monsters/icon/027_yakinikumaru.png', full: 'assets/monsters/full/027_yakinikumaru.png' },
   },
   {
-    id: 20,
-    dexNo: '020',
+    speciesId: 28,
+    dexNo: '028',
+    lineId: 'yakinikumaru_line',
+    evolutionStage: 1,
+    name: 'カルビーナ',
+    emoji: '🥩',
+    element: ['肉', '油'],
+    role: '高火力',
+    rarity: 'LEGEND', // TODO: 進化元(XXL)より1段階上に仮置き
+    poyoRank: 'XXL',
+    classification: '焼肉精霊',
+    favoriteFood: '焼肉',
+    habitat: ['焼肉街'],
+    baseCaptureRate: 0.105, // TODO: 進化元baseCaptureRateの×0.7目安で仮置き
+    baseStats: {
+      // TODO: 進化元(ヤキニクマル)基準 ×1.35 目安で仮置き（高火力型はぽよ力をさらに厚め）
+      hp: 62,
+      poyoPower: 30,
+      mochiDefense: 18,
+      speed: 7,
+      appetite: 27,
+      charm: 15,
+    },
+    skills: ['yaki_impact', 'meat_impact', 'fullness_boost'],
+    description:
+      // TODO: チャッピー承認待ち
+      'ボスの称号にふさわしい香ばしさをまとったもちぽよ。渾身の一撃は焼肉街の伝説として語り継がれる。',
+    evolvesFrom: 27,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: null, full: null },
+  },
+
+  // ---------- ビュッフェリア系統（伝説・ボス進化） ----------
+  {
+    speciesId: 29,
+    dexNo: '029',
+    lineId: 'buffeteria_line',
+    evolutionStage: 0,
     name: 'ビュッフェリア',
+    emoji: '🍽️',
     element: ['甘味', '炭水', '肉', '油', '乳製'],
     role: 'ボス/伝説',
     rarity: 'LEGEND',
@@ -820,7 +919,6 @@ export const monsters = [
     classification: '満腹女王',
     favoriteFood: 'なんでも',
     habitat: ['伝説のビュッフェ'],
-    emoji: '🍽️',
     baseCaptureRate: 0.08,
     baseStats: {
       hp: 60,
@@ -831,16 +929,44 @@ export const monsters = [
       charm: 22,
     },
     skills: ['buffet_aura', 'cream_wave', 'meat_impact'],
-    forms: [
-      {
-        formId: 'buffeteria',
-        name: 'ビュッフェリア',
-        evolutionStage: 0,
-        conditionLevel: null,
-        images: { icon: null, full: null },
-      },
-    ],
     description:
       '伝説のビュッフェ会場に現れると言われるもちぽよ。あらゆる食べ物の幸せを取り込み、圧倒的なぽよ力を持つ。',
+    evolvesFrom: null,
+    evolvesTo: 30,
+    evolveCondition: { level: 25, itemId: 'fullness_crown' },
+    images: { icon: 'assets/monsters/icon/029_buffeteria.png', full: 'assets/monsters/full/029_buffeteria.png' },
+  },
+  {
+    speciesId: 30,
+    dexNo: '030',
+    lineId: 'buffeteria_line',
+    evolutionStage: 1,
+    name: 'グランビュッフェリア',
+    emoji: '👑',
+    element: ['甘味', '炭水', '肉', '油', '乳製'],
+    role: 'ボス/伝説',
+    rarity: 'LEGEND', // LEGENDはLEGENDのまま
+    poyoRank: 'LEGEND',
+    classification: '満腹女王',
+    favoriteFood: 'なんでも',
+    habitat: ['伝説のビュッフェ'],
+    baseCaptureRate: 0.056, // TODO: 進化元baseCaptureRateの×0.7目安で仮置き
+    baseStats: {
+      // TODO: 進化元(ビュッフェリア)基準 ×1.75 目安で仮置き（最終ボスなので全体的に厚め）
+      hp: 105,
+      poyoPower: 42,
+      mochiDefense: 32,
+      speed: 14,
+      appetite: 44,
+      charm: 39,
+    },
+    skills: ['buffet_aura', 'cream_wave', 'meat_impact'],
+    description:
+      // TODO: チャッピー承認待ち
+      '満腹の王冠を戴いた、伝説のもちぽよの最終形態。あらゆる食の幸せを束ね、会場そのものを祝福で満たす。',
+    evolvesFrom: 29,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: null, full: null },
   },
 ]
