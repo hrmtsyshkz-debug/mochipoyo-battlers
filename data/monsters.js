@@ -265,7 +265,7 @@ export const species = [
     evolvesFrom: 7,
     evolvesTo: 9,
     evolveCondition: { level: 16, itemId: null }, // TODO: スターター進化レベルは仮置き（仕様書に明記なし）
-    images: { icon: null, full: 'assets/monsters/full/008_agepoyon.png' },
+    images: { icon: 'assets/monsters/icon/008_agepoyon.png', full: 'assets/monsters/full/008_agepoyon.png' },
   },
   {
     speciesId: 9,
