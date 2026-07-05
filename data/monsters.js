@@ -35,7 +35,7 @@ export const species = [
     evolvesFrom: null,
     evolvesTo: 2,
     evolveCondition: { level: 8, itemId: null }, // TODO: スターター進化レベルは仮置き（仕様書に明記なし）
-    images: { icon: null, full: null },
+    images: { icon: 'assets/monsters/icon/001_poyorin.png', full: 'assets/monsters/full/001_poyorin.png' },
   },
   {
     speciesId: 2,
@@ -101,7 +101,7 @@ export const species = [
     evolvesFrom: 2,
     evolvesTo: null,
     evolveCondition: null,
-    images: { icon: null, full: null },
+    images: { icon: 'assets/monsters/icon/003_poyorina.png', full: 'assets/monsters/full/003_poyorina.png' },
   },
 
   // ---------- ラーメルン系統（スターター） ----------
@@ -200,7 +200,7 @@ export const species = [
     evolvesFrom: 5,
     evolvesTo: null,
     evolveCondition: null,
-    images: { icon: null, full: null },
+    images: { icon: 'assets/monsters/icon/006_rameria.png', full: 'assets/monsters/full/006_rameria.png' },
   },
 
   // ---------- カラアゲポヨ系統（スターター） ----------
@@ -363,7 +363,7 @@ export const species = [
     evolvesFrom: 10,
     evolvesTo: null,
     evolveCondition: null,
-    images: { icon: null, full: null },
+    images: { icon: 'assets/monsters/icon/011_mochimochina.png', full: 'assets/monsters/full/011_mochimochina.png' },
   },
 
   // ---------- 通常種（進化なし） ----------
@@ -741,7 +741,7 @@ export const species = [
     evolvesFrom: 22,
     evolvesTo: null,
     evolveCondition: null,
-    images: { icon: null, full: null },
+    images: { icon: 'assets/monsters/icon/023_donutsia.png', full: 'assets/monsters/full/023_donutsia.png' },
   },
 
   {
@@ -901,7 +901,7 @@ export const species = [
     evolvesFrom: 27,
     evolvesTo: null,
     evolveCondition: null,
-    images: { icon: null, full: null },
+    images: { icon: 'assets/monsters/icon/028_karubina.png', full: 'assets/monsters/full/028_karubina.png' },
   },
 
   // ---------- ビュッフェリア系統（伝説・ボス進化） ----------
@@ -967,6 +967,6 @@ export const species = [
     evolvesFrom: 29,
     evolvesTo: null,
     evolveCondition: null,
-    images: { icon: null, full: null },
+    images: { icon: 'assets/monsters/icon/030_grandbuffeteria.png', full: 'assets/monsters/full/030_grandbuffeteria.png' },
   },
 ]
