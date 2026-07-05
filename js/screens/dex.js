@@ -2,6 +2,7 @@
 import { species } from "../../data/monsters.js";
 import { getDexEntry } from "../state.js";
 import { monsterAvatarHtml, monsterFullArtHtml, rarityLabel } from "../ui.js";
+import { MANPUKU_MAX, getBossManpuku, getManpukuMilestones } from "../manpuku.js";
 
 // 図鑑番号はデータのdexNoを正とする（未定義ならspeciesIdから生成）
 function dexNoOf(master) {
@@ -84,6 +85,38 @@ function showDetail(master, entry) {
         <div class="stat-row"><span>かわいさ</span><span>${master.baseStats.charm}</span></div>
       </div>
       <p class="hint-text">であった回数: ${entry.seenCount}　さいこうレベル: ${entry.maxLevel}</p>
+      ${manpukuSectionHtml(master)}
     </div>
+  `;
+}
+
+// ボス・ボス進化(mochina/donutsun/yakinikumaru/buffeteria系統)のみ満福度セクションを表示する
+function manpukuSectionHtml(master) {
+  if (!master.isBoss && !master.isBossEvolution) return "";
+
+  const manpuku = getBossManpuku(master.lineId);
+  const milestones = getManpukuMilestones(manpuku);
+  const pct = Math.min(100, Math.max(0, (manpuku / MANPUKU_MAX) * 100));
+
+  const rewardRow = (threshold, label, unlocked) => {
+    const status = unlocked ? "解放済み" : `あと${threshold - manpuku}`;
+    return `<div class="stat-row"><span>${threshold}　${label}</span><span>${status}</span></div>`;
+  };
+
+  const maxMsg = manpuku >= MANPUKU_MAX ? `<p>🍡 満福MAX！</p>` : "";
+  const frameMsg = milestones.frameUnlocked ? `<p class="hint-text">満福フレーム解放済み</p>` : "";
+
+  return `
+    <h3>満福度</h3>
+    <p>満福度 ${manpuku} / ${MANPUKU_MAX}</p>
+    <div class="exp-bar-outer"><div class="exp-bar-inner" style="width:${pct}%;"></div></div>
+    ${maxMsg}
+    <div class="stat-list">
+      ${rewardRow(5, "進化アイテム+1", milestones.itemDropBonus)}
+      ${rewardRow(10, "捕獲率+5%", milestones.captureBonus)}
+      ${rewardRow(20, "満福フレーム", milestones.frameUnlocked)}
+      ${rewardRow(30, "追加報酬枠+1", milestones.rewardSlotBonus)}
+    </div>
+    ${frameMsg}
   `;
 }

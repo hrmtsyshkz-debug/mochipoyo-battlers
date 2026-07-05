@@ -24,6 +24,12 @@ function createInitialSaveData() {
     },
     dex: {},
     clearedStages: [],
+    bossManpuku: {
+      mochina_line: 0,
+      donutsun_line: 0,
+      yakinikumaru_line: 0,
+      buffeteria_line: 0,
+    },
     settings: {
       sound: true,
       reducedMotion: false,
@@ -107,6 +113,11 @@ function normalizeSaveData(parsed) {
       parsed.inventory && typeof parsed.inventory === "object" ? parsed.inventory : { ...base.inventory },
     dex: parsed.dex && typeof parsed.dex === "object" ? parsed.dex : {},
     clearedStages: Array.isArray(parsed.clearedStages) ? parsed.clearedStages : [],
+    // 旧v2セーブ（bossManpukuなし）はベースの初期値で自動補完する（v3への移行は行わない）
+    bossManpuku: {
+      ...base.bossManpuku,
+      ...(parsed.bossManpuku && typeof parsed.bossManpuku === "object" ? parsed.bossManpuku : {}),
+    },
     settings: {
       ...base.settings,
       ...(parsed.settings || {}),
