@@ -2,6 +2,7 @@
 // 捕獲タイミング「スイーツ投げゲージ」「ぷにゲージ（連打）」「ぽよじゃんけんカード」を提供する。
 // Canvasは使わず、オーバーレイDOM + CSSアニメーションで実装する。
 import { getState } from "./state.js";
+import { playSfx } from "./audio.js";
 
 const GRADE_MULTIPLIER = { MISS: 0.9, OK: 1.0, GOOD: 1.1, PERFECT: 1.25 };
 const CAPTURE_BONUS = { PERFECT: 0.2, GOOD: 0.1, OK: 0, MISS: -0.05 };
@@ -69,6 +70,7 @@ export function playTimingGame() {
       if (!grade) {
         grade = judgeTimingPosition(cursor, track);
       }
+      playSfx("minigame_result", grade);
       showResultAndClose(gradeMessageTiming(grade), () => {
         resolve({ grade, captureBonus: CAPTURE_BONUS[grade] });
       });
@@ -176,6 +178,7 @@ export function playJankenGame() {
         result = "lose";
       }
       const multiplier = { win: 1.25, draw: 1.0, lose: 0.8 }[result];
+      playSfx(`janken_${result}`);
       showResultAndClose(gradeMessageJanken(result), () => {
         resolve({ result, multiplier });
       });
@@ -244,6 +247,7 @@ export function playMashGame() {
       e.preventDefault();
       if (settled) return;
       tapCount += 1;
+      playSfx("mash_tap");
       const pct = Math.min(100, (tapCount / 15) * 100);
       gauge.style.width = pct + "%";
       puni.classList.remove("puni-pop");
@@ -259,6 +263,7 @@ export function playMashGame() {
       cleanup();
 
       const grade = judgeMashCount(tapCount);
+      playSfx("minigame_result", grade);
       showResultAndClose(gradeMessageMash(grade), () => {
         resolve({ grade, multiplier: GRADE_MULTIPLIER[grade] });
       });

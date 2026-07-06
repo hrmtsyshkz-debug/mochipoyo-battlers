@@ -14,6 +14,7 @@ import {
 } from "../state.js";
 import { monsterAvatarHtml, monsterFullArtHtml, showToast, displayName } from "../ui.js";
 import { showEvolution } from "./evolution.js";
+import { playSfx } from "../audio.js";
 
 let selectedInstanceId = null;
 
@@ -226,6 +227,7 @@ function feedItem(item, instance, navigate) {
 
   applyFoodToInstance(instance, item);
   showToast(`${instance.nickname}は おなかいっぱい！`);
+  playSfx("levelup");
   saveGame();
   renderRaise(navigate);
 }

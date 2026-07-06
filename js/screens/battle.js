@@ -32,6 +32,7 @@ import {
 } from "../battle.js";
 import { showToast, displayName, monsterImageInnerHtml, escapeHtml } from "../ui.js";
 import { playTimingGame, playMashGame, playJankenGame } from "../minigames.js";
+import { playSfx } from "../audio.js";
 import {
   MANPUKU_MAX,
   addBossManpuku,
@@ -270,6 +271,39 @@ function appendLog(lines) {
   log.innerHTML = lines.map((l) => `<div>${l}</div>`).join("");
 }
 
+// resolveSkillActionの戻り値(skillType/missed拡張フィールド)から再生すべきSEを判定して鳴らす。
+// actorが自分のユニットなら攻撃側視点(attack)、相手ユニットなら被弾側視点(damage)で鳴らし分ける。
+function playSkillResultSfx(actor, result) {
+  if (!result) return;
+  const isPlayerActor = actor === battleState.playerUnit;
+
+  if (result.missed) {
+    playSfx("miss");
+    return;
+  }
+
+  switch (result.skillType) {
+    case "attack":
+    case "special":
+      playSfx(isPlayerActor ? "attack" : "damage");
+      break;
+    case "heal":
+      playSfx("heal");
+      break;
+    case "buff":
+      playSfx("buff");
+      break;
+    case "debuff":
+      playSfx("debuff");
+      break;
+    case "guard":
+      playSfx("guard");
+      break;
+    default:
+      break;
+  }
+}
+
 function renderCommandButtons(navigate) {
   const grid = document.getElementById("command-grid");
   const subPanel = document.getElementById("battle-sub-panel");
@@ -436,6 +470,7 @@ function doGuard(navigate) {
   resetGuard(battleState.playerUnit);
   const result = resolveGuardAction(battleState.playerUnit);
   appendLog(result.logs);
+  playSfx("guard");
   setTimeout(() => enemyTurn(navigate), 900);
 }
 
@@ -453,6 +488,7 @@ function doItem(item, navigate) {
   const healAmount = multiplier !== 1.0 ? Math.max(1, Math.floor(item.healAmount * multiplier)) : item.healAmount;
   battleState.playerUnit.currentHp = Math.min(battleState.playerUnit.maxHp, battleState.playerUnit.currentHp + healAmount);
   appendLog([`${battleState.playerUnit.name}は ${item.name}を つかった！`, `HPが ${healAmount} かいふくした！`]);
+  playSfx("heal");
   updateHpBars();
   saveGame();
   setTimeout(() => enemyTurn(navigate), 900);
@@ -471,17 +507,20 @@ function doCapture(item, navigate) {
   consumeNextActionMultiplier(); // 捕獲は「行動」扱いのため、じゃんけん補正が残っていれば消費だけしておく
   saveGame();
 
+  playSfx("capture_throw");
   playTimingGame().then(({ grade, captureBonus }) => {
     const manpukuCaptureBonus = battleState.isBoss ? getManpukuCaptureBonus(battleState.enemyMaster.lineId) : 0;
     const totalBonus = captureBonus + manpukuCaptureBonus;
     const captured = attemptCapture(battleState.enemyMaster, battleState.enemyUnit, item, totalBonus);
     if (captured) {
       appendLog([`${item.name}を なげた！`, `やった！ ${battleState.enemyMaster.name}を つかまえた！`]);
+      playSfx("capture_success");
       finishBattle("capture", navigate);
       return;
     }
 
     appendLog([`${item.name}を なげた！`, `しかし ${battleState.enemyMaster.name}は にげようとしている...`]);
+    playSfx("capture_fail");
     setTimeout(() => enemyTurn(navigate), 900);
   });
 }
@@ -526,6 +565,7 @@ function runPlayerThenEnemyTurn(navigate, playerActionFn) {
     resetGuard(playerUnit);
     const result = playerActionFn(playerUnit, enemyUnit);
     appendLog(result.logs);
+    playSkillResultSfx(playerUnit, result);
     flashPortrait("enemy-portrait");
     updateHpBars();
     saveInstanceHp();
@@ -541,8 +581,9 @@ function runPlayerThenEnemyTurn(navigate, playerActionFn) {
     const enemySkillId = chooseEnemySkill(enemyUnit);
     const enemyResult = enemySkillId
       ? resolveSkillAction(enemyUnit, playerUnit, enemySkillId)
-      : { logs: [`${enemyUnit.name}は ためらっている...`], fainted: false };
+      : { logs: [`${enemyUnit.name}は ためらっている...`], fainted: false, skillType: null, missed: false };
     appendLog(enemyResult.logs);
+    playSkillResultSfx(enemyUnit, enemyResult);
     flashPortrait("player-portrait");
     updateHpBars();
     saveInstanceHp();
@@ -556,6 +597,7 @@ function runPlayerThenEnemyTurn(navigate, playerActionFn) {
       resetGuard(playerUnit);
       const result = playerActionFn(playerUnit, enemyUnit);
       appendLog(result.logs);
+      playSkillResultSfx(playerUnit, result);
       flashPortrait("enemy-portrait");
       updateHpBars();
       saveInstanceHp();
@@ -574,8 +616,9 @@ function enemyTurn(navigate) {
   const enemySkillId = chooseEnemySkill(battleState.enemyUnit);
   const result = enemySkillId
     ? resolveSkillAction(battleState.enemyUnit, battleState.playerUnit, enemySkillId)
-    : { logs: [`${battleState.enemyUnit.name}は ためらっている...`], fainted: false };
+    : { logs: [`${battleState.enemyUnit.name}は ためらっている...`], fainted: false, skillType: null, missed: false };
   appendLog(result.logs);
+  playSkillResultSfx(battleState.enemyUnit, result);
   flashPortrait("player-portrait");
   updateHpBars();
   saveInstanceHp();
@@ -779,6 +822,7 @@ function finishBattle(result, navigate) {
       <button class="btn btn-block" id="battle-continue-btn">つづける</button>
     `;
     screen.appendChild(overlay);
+    playSfx("victory");
 
     overlay.querySelector("#battle-continue-btn").addEventListener("click", () => {
       screen.removeChild(overlay);
@@ -836,6 +880,7 @@ function finishBattle(result, navigate) {
       <button class="btn btn-block" id="battle-continue-btn">ホームへもどる</button>
     `;
     screen.appendChild(overlay);
+    playSfx(won ? "victory" : "lose");
     overlay.querySelector("#battle-continue-btn").addEventListener("click", () => {
       screen.removeChild(overlay);
       navigate("home");
@@ -849,6 +894,7 @@ function finishBattle(result, navigate) {
       <button class="btn btn-block" id="battle-continue-btn">ホームへもどる</button>
     `;
     screen.appendChild(overlay);
+    playSfx("lose");
     if (battleState.playerInstance) {
       battleState.playerInstance.currentHp = 0;
     }

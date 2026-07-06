@@ -95,11 +95,13 @@ export function isFainted(unit) {
 // ---------- 1ターン行動解決 ----------
 // actor, target: battleUnit。skillId: 使用スキルid。
 // multiplier: ミニゲーム補正（連打・ぽよじゃんけん等）。攻撃/特殊のダメージ計算後に乗算する。デフォルト1.0。
-// 戻り値: { logs: string[], fainted: boolean }
+// 戻り値: { logs: string[], fainted: boolean, skillType, missed }
+// skillType/missedは呼び出し側(screens/battle.js)がSE再生用に判定するための拡張フィールド。
+// 既存フィールド(logs/fainted)はそのまま維持し、後方互換を保つ。
 export function resolveSkillAction(actor, target, skillId, multiplier = 1.0) {
   const skill = getSkill(skillId);
   const logs = [];
-  if (!skill) return { logs, fainted: false };
+  if (!skill) return { logs, fainted: false, skillType: null, missed: false };
 
   logs.push(`${actor.name}の ${skill.name}！`);
 
@@ -107,7 +109,7 @@ export function resolveSkillAction(actor, target, skillId, multiplier = 1.0) {
     const hit = rollHit(skill);
     if (!hit) {
       logs.push(`しかし ${target.name}には あたらなかった...`);
-      return { logs, fainted: false };
+      return { logs, fainted: false, skillType: skill.type, missed: true };
     }
     const attackerView = withEffectiveStats(actor);
     const defenderView = withEffectiveStats(target);
@@ -127,7 +129,7 @@ export function resolveSkillAction(actor, target, skillId, multiplier = 1.0) {
       logs.push(`${actor.name}は ${healAmount} かいふくした！`);
     }
     if (isFainted(target)) {
-      return { logs, fainted: true };
+      return { logs, fainted: true, skillType: skill.type, missed: false };
     }
   } else if (skill.type === "guard") {
     // guardタイプのスキルは防御バフのみ。isGuarding（ふんばる=受けるダメージ50%）は
@@ -157,7 +159,7 @@ export function resolveSkillAction(actor, target, skillId, multiplier = 1.0) {
     const hit = rollHit(skill);
     if (!hit) {
       logs.push(`しかし ${target.name}には きかなかった...`);
-      return { logs, fainted: false };
+      return { logs, fainted: false, skillType: skill.type, missed: true };
     }
     const duration = 3; // TODO: 仕様書にdebuff系skillのdurationが無いため仮置き
     if (skill.effect) {
@@ -168,7 +170,7 @@ export function resolveSkillAction(actor, target, skillId, multiplier = 1.0) {
     logs.push(`${target.name}の ようすが かわった！`);
   }
 
-  return { logs, fainted: isFainted(target) };
+  return { logs, fainted: isFainted(target), skillType: skill.type, missed: false };
 }
 
 // 「ふんばる」コマンド: 1ターンだけ受けるダメージを50%にする

@@ -3,6 +3,7 @@ import { getState, deleteSaveData, saveGame } from "../state.js";
 import { showToast } from "../ui.js";
 import { DEFAULT_TRAINER_NAME } from "../challenge.js";
 import { supportButtonsHtml } from "../support.js";
+import { playSfx } from "../audio.js";
 
 export function renderSettings(navigate) {
   const screen = document.getElementById("screen-settings");
@@ -32,7 +33,7 @@ export function renderSettings(navigate) {
     <div class="settings-row">
       <div class="settings-label">
         <div>サウンド</div>
-        <div class="hint-text">TODO: 音源ファイルが未実装のため、現在は設定値の保存のみ行う</div>
+        <div class="hint-text">たたかいの こうかおんを ならすよ</div>
       </div>
       <label class="toggle-switch">
         <input type="checkbox" id="toggle-sound" ${state.settings.sound ? "checked" : ""} />
@@ -79,7 +80,9 @@ export function renderSettings(navigate) {
   screen.querySelector("#toggle-sound").addEventListener("change", (e) => {
     state.settings.sound = e.target.checked;
     saveGame();
-    // TODO: サウンド素材が用意でき次第、ここでBGM/SEの再生可否を切り替える
+    if (state.settings.sound) {
+      playSfx("levelup"); // ONにした瞬間に確認用の短いSEを1回鳴らす
+    }
   });
 
   screen.querySelector("#toggle-reduced-motion").addEventListener("change", (e) => {

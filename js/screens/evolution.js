@@ -1,5 +1,6 @@
 // 進化演出オーバーレイ
 import { monsterFullArtHtml } from "../ui.js";
+import { playSfx } from "../audio.js";
 
 // evolvedInfo: { evolvedName, master }（master = 進化先speciesのマスタデータ）
 export function showEvolution(evolvedInfo, onDone) {
@@ -13,6 +14,7 @@ export function showEvolution(evolvedInfo, onDone) {
     <button class="btn btn-block" id="evolution-close-btn">やったね！</button>
   `;
   overlay.classList.remove("hidden");
+  playSfx("evolve");
 
   overlay.querySelector("#evolution-close-btn").addEventListener("click", () => {
     overlay.classList.add("hidden");
