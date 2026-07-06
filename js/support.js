@@ -6,13 +6,13 @@ export const SUPPORT_LINKS = [
     id: "ofuse",
     label: "OFUSEで おうえんする",
     emoji: "💌",
-    url: null, // 例: "https://ofuse.me/xxxx"
+    url: "https://ofuse.me/7f5ac761",
   },
   {
     id: "kofi",
     label: "Ko-fiで おうえんする",
     emoji: "☕",
-    url: null, // 例: "https://ko-fi.com/xxxx"
+    url: "https://ko-fi.com/H5R622OAME",
   },
 ];
 
