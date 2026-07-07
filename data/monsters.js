@@ -1,4 +1,4 @@
-// モンスターデータ（ポケモン方式: 1進化形態 = 1図鑑枠 = 1species。30種）
+// モンスターデータ（ポケモン方式: 1進化形態 = 1図鑑枠 = 1species。30種 + 隠しボス4種 = 34種）
 // 各レコードは「1つの見た目・1つのdexNo」を持つ独立した種(species)。
 // evolvesFrom/evolvesTo は speciesId 参照。evolveCondition は evolvesTo がある場合のみ持つ。
 //   level: 到達で進化可能になるレベル
@@ -976,5 +976,141 @@ export const species = [
     evolvesTo: null,
     evolveCondition: null,
     images: { icon: 'assets/monsters/icon/030_grandbuffeteria.png', full: 'assets/monsters/full/030_grandbuffeteria.png' },
+  },
+
+  // ---------- 隠しボス（No.031〜034、POSTGAME_SECRET_BOSS_SPEC_v0.1 準拠） ----------
+  // baseStatsはボス進化4体(011/023/028/030)と同水準〜やや上でroleに沿って配分（TODO: チャッピー承認待ちの仮置き）。
+  // evolvesFrom/evolvesTo/evolveConditionはすべてnull（隠しボス専用進化は非目標）。
+  {
+    speciesId: 31,
+    dexNo: '031',
+    name: '月見モチカ',
+    lineId: 'tsukimi_mochika_line',
+    evolutionStage: 0,
+    isSecretBoss: true,
+    element: ['和食', '甘味'],
+    role: '防御/回復',
+    rarity: 'SECRET',
+    poyoRank: 'XXL', // TODO: 仮置き（チャッピー承認待ち）
+    classification: '月見精霊', // TODO: 仮置き
+    favoriteFood: '月見団子', // TODO: 仮置き
+    emoji: '🌕',
+    baseCaptureRate: 0.16,
+    habitat: ['閉店後の商店街'],
+    baseStats: {
+      // TODO: 進化4体(011/023/028/030)と同水準〜やや上、防御/回復役に沿って配分（仮置き）
+      hp: 58,
+      poyoPower: 14,
+      mochiDefense: 24,
+      speed: 10,
+      appetite: 20,
+      charm: 22,
+    },
+    skills: ['mochi_guard', 'anko_heal', 'fluffy_press'],
+    description:
+      '月明かりの商店街にだけ現れる、月見団子モチーフのぽっちゃり精霊。やわらかな満月の光で仲間を守る。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: null, full: 'assets/monsters/full/031_tsukimi_mochika.png' },
+  },
+  {
+    speciesId: 32,
+    dexNo: '032',
+    name: 'ナイトパフェリア',
+    lineId: 'night_parferia_line',
+    evolutionStage: 0,
+    isSecretBoss: true,
+    element: ['甘味', '乳製'],
+    role: '回復/魅了',
+    rarity: 'SECRET',
+    poyoRank: 'XXL', // TODO: 仮置き
+    classification: '夜パフェ精霊', // TODO: 仮置き
+    favoriteFood: '夜パフェ', // TODO: 仮置き
+    emoji: '🌙',
+    baseCaptureRate: 0.14,
+    habitat: ['夜のフードコート'],
+    baseStats: {
+      // TODO: 進化4体と同水準〜やや上、回復/魅了役に沿って配分（仮置き）
+      hp: 55,
+      poyoPower: 15,
+      mochiDefense: 20,
+      speed: 14,
+      appetite: 19,
+      charm: 28,
+    },
+    skills: ['cream_wave', 'sugar_kiss', 'marshmallow_heal'],
+    description:
+      '夜パフェのきらめきから生まれたぽっちゃり精霊。甘い星明かりで相手をうっとりさせる。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: null, full: 'assets/monsters/full/032_night_parferia.png' },
+  },
+  {
+    speciesId: 33,
+    dexNo: '033',
+    name: 'ジュージュリア',
+    lineId: 'juujuria_line',
+    evolutionStage: 0,
+    isSecretBoss: true,
+    element: ['肉', '油'],
+    role: '高火力',
+    rarity: 'SECRET',
+    poyoRank: 'XXL', // TODO: 仮置き
+    classification: '鉄板精霊', // TODO: 仮置き
+    favoriteFood: '鉄板焼き', // TODO: 仮置き
+    emoji: '🔥',
+    baseCaptureRate: 0.13,
+    habitat: ['灼熱の焼肉街'],
+    baseStats: {
+      // TODO: 進化4体(特に027/028高火力枠)と同水準〜やや上に配分（仮置き）
+      hp: 64,
+      poyoPower: 32,
+      mochiDefense: 19,
+      speed: 9,
+      appetite: 28,
+      charm: 16,
+    },
+    skills: ['yaki_impact', 'meat_impact', 'hot_charge'],
+    description:
+      '鉄板の熱気と香ばしい煙から現れるぽっちゃり精霊。豪快に笑いながら、ジュージュー燃える一撃を放つ。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: null, full: 'assets/monsters/full/033_juujuria.png' },
+  },
+  {
+    speciesId: 34,
+    dexNo: '034',
+    name: 'フルコースティア',
+    lineId: 'fullcoursetia_line',
+    evolutionStage: 0,
+    isSecretBoss: true,
+    element: ['甘味', '炭水', '肉', '油', '乳製'],
+    role: '隠し女王/万能',
+    rarity: 'SECRET_LEGEND',
+    poyoRank: 'LEGEND', // TODO: 仮置き
+    classification: '隠し女王', // TODO: 仮置き
+    favoriteFood: 'フルコース', // TODO: 仮置き
+    emoji: '🍽️',
+    baseCaptureRate: 0.08,
+    habitat: ['王冠のビュッフェ'],
+    baseStats: {
+      // TODO: 進化4体の最上位(030グランビュッフェリア)よりやや上、万能型に配分（仮置き）
+      hp: 110,
+      poyoPower: 44,
+      mochiDefense: 34,
+      speed: 16,
+      appetite: 46,
+      charm: 42,
+    },
+    skills: ['buffet_aura', 'marshmallow_heal', 'meat_impact'],
+    description:
+      'すべてのコース料理の祝福をまとった隠し女王。優しい笑顔で満腹の奇跡を起こす。',
+    evolvesFrom: null,
+    evolvesTo: null,
+    evolveCondition: null,
+    images: { icon: 'assets/monsters/icon/034_fullcoursetia.png', full: 'assets/monsters/full/034_fullcoursetia.png' },
   },
 ]

@@ -752,6 +752,24 @@ img.monster-img {
   margin: 4px 0 14px;
 }
 
+/* ===== 探索画面：EXステージカード（クリア後コンテンツ） ===== */
+.ex-stage-card {
+  background: linear-gradient(135deg, #2c2a4a, #4a3a6a);
+  color: var(--color-white);
+  margin-left: 18px;
+  margin-top: -2px;
+}
+
+.ex-stage-card .stage-desc {
+  color: #e6def7;
+}
+
+.ex-stage-meta {
+  font-size: 11px;
+  color: #ffe9a8;
+  margin-top: 2px;
+}
+
 /* ===== バトル画面：コマンド ===== */
 .command-grid {
   display: grid;

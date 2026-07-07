@@ -2,10 +2,11 @@
 import { species } from "../data/monsters.js";
 import { items } from "../data/items.js";
 import { skills } from "../data/skills.js";
-import { stages } from "../data/stages.js";
+import { stages, exStages } from "../data/stages.js";
 
 export const SAVE_KEY = "mochipoyo_battlers_save_v2";
-const SAVE_VERSION = 2;
+// SAVE_KEYは変更しない（絶対条件）。postGame追加に伴いversionのみ内部的に3へ上げる。
+const SAVE_VERSION = 3;
 
 function createInitialSaveData() {
   return {
@@ -35,6 +36,23 @@ function createInitialSaveData() {
       reducedMotion: false,
       easyMiniGames: false,
     },
+    postGame: createInitialPostGame(),
+  };
+}
+
+// クリア後コンテンツ用フィールド（POSTGAME_SECRET_BOSS_SPEC_v0.1 準拠）
+function createInitialPostGame() {
+  return {
+    version: 1,
+    unlocked: false,
+    exStagesCleared: [],
+    stageMastery: {},
+    secretBossPity: { "031": 0, "032": 0, "033": 0, "034": 0 },
+    secretBossSeen: { "031": false, "032": false, "033": false, "034": false },
+    secretBossDefeated: { "031": 0, "032": 0, "033": 0, "034": 0 },
+    secretBossCaptured: { "031": 0, "032": 0, "033": 0, "034": 0 },
+    missionsClaimed: {},
+    titlesUnlocked: [],
   };
 }
 
@@ -60,6 +78,10 @@ export function getItem(itemId) {
 
 export function getStage(stageId) {
   return stages.find((s) => s.id === stageId) || null;
+}
+
+export function getExStage(exStageId) {
+  return exStages.find((s) => s.id === exStageId) || null;
 }
 
 // ---------- セーブ / ロード ----------
@@ -123,6 +145,49 @@ function normalizeSaveData(parsed) {
       ...(parsed.settings || {}),
     },
   };
+  return migratePostGame(normalized, parsed);
+}
+
+// クリア後コンテンツのマイグレーション（POSTGAME_SECRET_BOSS_SPEC_v0.1のmigratePostGame相当）。
+// postGameフィールドの欠損を補完し、legend_buffetクリア済みなら unlocked=true にする。
+// SAVE_KEYは変更せず、既存フィールド(player/party/box/inventory/dex/clearedStages/bossManpuku/settings)には一切触れない。
+function migratePostGame(normalized, parsed) {
+  const rawPostGame = parsed && typeof parsed.postGame === "object" && parsed.postGame !== null ? parsed.postGame : {};
+
+  const postGame = {
+    version: rawPostGame.version ?? 1,
+    unlocked: rawPostGame.unlocked ?? false,
+    exStagesCleared: Array.isArray(rawPostGame.exStagesCleared) ? rawPostGame.exStagesCleared : [],
+    stageMastery: rawPostGame.stageMastery && typeof rawPostGame.stageMastery === "object" ? rawPostGame.stageMastery : {},
+    secretBossPity:
+      rawPostGame.secretBossPity && typeof rawPostGame.secretBossPity === "object" ? { ...rawPostGame.secretBossPity } : {},
+    secretBossSeen:
+      rawPostGame.secretBossSeen && typeof rawPostGame.secretBossSeen === "object" ? { ...rawPostGame.secretBossSeen } : {},
+    secretBossDefeated:
+      rawPostGame.secretBossDefeated && typeof rawPostGame.secretBossDefeated === "object"
+        ? { ...rawPostGame.secretBossDefeated }
+        : {},
+    secretBossCaptured:
+      rawPostGame.secretBossCaptured && typeof rawPostGame.secretBossCaptured === "object"
+        ? { ...rawPostGame.secretBossCaptured }
+        : {},
+    missionsClaimed:
+      rawPostGame.missionsClaimed && typeof rawPostGame.missionsClaimed === "object" ? rawPostGame.missionsClaimed : {},
+    titlesUnlocked: Array.isArray(rawPostGame.titlesUnlocked) ? rawPostGame.titlesUnlocked : [],
+  };
+
+  for (const id of ["031", "032", "033", "034"]) {
+    postGame.secretBossPity[id] ??= 0;
+    postGame.secretBossSeen[id] ??= false;
+    postGame.secretBossDefeated[id] ??= 0;
+    postGame.secretBossCaptured[id] ??= 0;
+  }
+
+  if (normalized.clearedStages.includes("legend_buffet")) {
+    postGame.unlocked = true;
+  }
+
+  normalized.postGame = postGame;
   return normalized;
 }
 
@@ -290,7 +355,8 @@ export function addItem(itemId, count = 1) {
 
 // ---------- 経験値・レベルアップ ----------
 
-const RARITY_BONUS = { S: 0, M: 3, L: 6, XL: 10, XXL: 15, LEGEND: 30 };
+// SECRET/SECRET_LEGENDは隠しボス用レア度（TODO: 数値は仮置き、チャッピー承認待ち）
+const RARITY_BONUS = { S: 0, M: 3, L: 6, XL: 10, XXL: 15, LEGEND: 30, SECRET: 20, SECRET_LEGEND: 40 };
 
 export function calcExpGain(enemyMaster, enemyLevel) {
   const bonus = RARITY_BONUS[enemyMaster.rarity] || 0;

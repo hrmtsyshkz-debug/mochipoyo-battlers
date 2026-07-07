@@ -38,6 +38,12 @@ export function renderHome(navigate) {
         : ""
     }
 
+    ${
+      state.postGame && state.postGame.unlocked
+        ? `<div class="evolve-banner" id="postgame-banner">🌙 クリア後探索が かいほうされた！ EX探索で まだ見ぬ もちぽよを さがそう ✨</div>`
+        : ""
+    }
+
     <div class="home-grid">
       <button class="home-card" id="nav-explore">
         <span class="icon">🗺️</span>
@@ -100,6 +106,10 @@ export function renderHome(navigate) {
   const evolveBanner = screen.querySelector("#evolve-banner");
   if (evolveBanner) {
     evolveBanner.addEventListener("click", () => navigate("raise"));
+  }
+  const postGameBanner = screen.querySelector("#postgame-banner");
+  if (postGameBanner) {
+    postGameBanner.addEventListener("click", () => navigate("explore"));
   }
   const challengeBanner = screen.querySelector("#challenge-banner");
   if (challengeBanner) {

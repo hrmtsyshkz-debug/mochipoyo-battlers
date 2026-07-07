@@ -35,11 +35,19 @@ import { playTimingGame, playMashGame, playJankenGame } from "../minigames.js";
 import { playSfx } from "../audio.js";
 import {
   MANPUKU_MAX,
+  MANPUKU_LINES,
   addBossManpuku,
   getManpukuCaptureBonus,
   hasManpukuRewardBonus,
   rollManpukuBonusReward,
 } from "../manpuku.js";
+import {
+  addStageMastery,
+  applyExRewardMultiplier,
+  rollExBonusDrop,
+  calculateSecretBossGold,
+  rollSecretBossBonusDrop,
+} from "../postgame.js";
 
 let battleState = null; // { playerUnit, enemyUnit, playerInstance, enemyMaster, stage, isBoss, isOver, mode, ... }
 
@@ -66,12 +74,15 @@ export function renderBattle(navigate, params = {}) {
     navigate("home");
     return;
   }
-  const { enemySpeciesId, enemyLevel, stage, isBoss } = params;
+  const { enemySpeciesId, stage, exStage, isBoss, isSecretBoss } = params;
   const enemyMaster = getMonsterMaster(enemySpeciesId);
   if (!enemyMaster) {
     screen.innerHTML = `<div class="empty-state">敵が見つかりませんでした</div>`;
     return;
   }
+
+  // 隠しボス戦: 敵レベルはexStage.maxEnemyLevel + 2（TODO: 仕様書に明記が無いため仮置き）
+  const enemyLevel = isSecretBoss ? (exStage ? exStage.maxEnemyLevel + 2 : 1) : params.enemyLevel;
 
   discoverMonster(enemyMaster.speciesId, { owned: false });
   saveGame();
@@ -87,7 +98,9 @@ export function renderBattle(navigate, params = {}) {
   });
   playerUnit.currentHp = leader.instance.currentHp;
 
-  const enemyStats = computeEnemyStats(enemyMaster, enemyLevel, !!isBoss);
+  // 隠しボスはisBoss扱い（ぽよじゃんけん発動・フルスペック・野生0.85補正なし）
+  const treatAsBoss = !!isBoss || !!isSecretBoss;
+  const enemyStats = computeEnemyStats(enemyMaster, enemyLevel, treatAsBoss);
   const enemyUnit = createBattleUnit({
     name: enemyMaster.name,
     emoji: enemyMaster.emoji,
@@ -106,7 +119,9 @@ export function renderBattle(navigate, params = {}) {
     enemyMaster,
     enemyLevel,
     stage,
-    isBoss: !!isBoss,
+    exStage,
+    isBoss: treatAsBoss,
+    isSecretBoss: !!isSecretBoss,
     isOver: false,
     turnLocked: false,
     bossJankenUsed: false,
@@ -722,17 +737,20 @@ function flashPortrait(id) {
   node.classList.add("shake");
 }
 
-// ボス撃破に伴う共通処理（勝利/捕獲どちらでも呼ばれる）。
+// ボス撃破に伴う共通処理（勝利/捕獲どちらでも呼ばれる）。通常ステージのボスのみが対象。
 // 満福度をamount分加算し、その加算後の満福度に応じて進化アイテムをドロップし、
-// 初回撃破ならエリア解放メッセージを出す。戻り値: { manpukuAfter, dropMsg, clearedMsg }
+// 初回撃破ならエリア解放メッセージを出す。戻り値: { manpukuAfter, dropMsg, clearedMsg, manpukuMsg }
+// 裁定1のガード: 満福度加算・ボスアイテムドロップ・markStageClearedは
+// enemyMaster.lineIdがMANPUKU_LINESに含まれる場合のみ実行する（隠しボスのlineIdは対象外のため自動的に除外される）。
 function applyBossDefeatRewards(amount) {
   const lineId = battleState.enemyMaster.lineId;
-  const manpukuAfter = addBossManpuku(lineId, amount);
+  const isManpukuLine = MANPUKU_LINES.some((l) => l.lineId === lineId);
+  const manpukuAfter = isManpukuLine ? addBossManpuku(lineId, amount) : 0;
 
   let clearedMsg = "";
   let dropMsg = "";
 
-  if (battleState.stage) {
+  if (isManpukuLine && battleState.stage) {
     const alreadyCleared = getState().clearedStages.includes(battleState.stage.id);
     markStageCleared(battleState.stage.id);
     if (!alreadyCleared) {
@@ -757,12 +775,77 @@ function applyBossDefeatRewards(amount) {
     }
   }
 
-  const manpukuMsg =
-    manpukuAfter >= MANPUKU_MAX
-      ? `<p>🍡 満福度が あがった！ 満福MAX！</p>`
-      : `<p>🍡 満福度が あがった！（${manpukuAfter} / ${MANPUKU_MAX}）</p>`;
+  const manpukuMsg = !isManpukuLine
+    ? ""
+    : manpukuAfter >= MANPUKU_MAX
+    ? `<p>🍡 満福度が あがった！ 満福MAX！</p>`
+    : `<p>🍡 満福度が あがった！（${manpukuAfter} / ${MANPUKU_MAX}）</p>`;
 
   return { manpukuAfter, dropMsg, clearedMsg, manpukuMsg };
+}
+
+// EXボス撃破処理（裁定2）: 満福度・専用アイテムドロップは通常ボスと同様に発動する。
+// ステージクリア記録はpostGame.exStagesClearedに入れ、clearedStagesとエリア解放メッセージは触らない。
+// 初回EXクリア時のみ「🌟 ○○を クリアした！」表示を出す。戻り値: { manpukuAfter, dropMsg, clearedMsg, manpukuMsg }
+function applyExBossDefeatRewards(amount) {
+  const exStage = battleState.exStage;
+  const lineId = battleState.enemyMaster.lineId;
+  const isManpukuLine = MANPUKU_LINES.some((l) => l.lineId === lineId);
+  const manpukuAfter = isManpukuLine ? addBossManpuku(lineId, amount) : 0;
+
+  let clearedMsg = "";
+  let dropMsg = "";
+
+  if (exStage) {
+    const state = getState();
+    const alreadyCleared = state.postGame.exStagesCleared.includes(exStage.id);
+    if (!alreadyCleared) {
+      state.postGame.exStagesCleared.push(exStage.id);
+      clearedMsg = `<p>🌟 ${exStage.name}を クリアした！</p>`;
+    }
+    if (exStage.bossDropItemId) {
+      const dropAmount = manpukuAfter >= 5 ? 2 : 1;
+      addItem(exStage.bossDropItemId, dropAmount);
+      const dropItem = getItem(exStage.bossDropItemId);
+      const dropName = dropItem ? dropItem.name : exStage.bossDropItemId;
+      const dropEmoji = dropItem && dropItem.emoji ? dropItem.emoji : "🎁";
+      const suffix = dropAmount > 1 ? ` ×${dropAmount}` : "";
+      dropMsg = `<p>${dropEmoji} ${dropName}${suffix}を てにいれた！</p>`;
+    }
+  }
+
+  const manpukuMsg = !isManpukuLine
+    ? ""
+    : manpukuAfter >= MANPUKU_MAX
+    ? `<p>🍡 満福度が あがった！ 満福MAX！</p>`
+    : `<p>🍡 満福度が あがった！（${manpukuAfter} / ${MANPUKU_MAX}）</p>`;
+
+  return { manpukuAfter, dropMsg, clearedMsg, manpukuMsg };
+}
+
+// 隠しボス撃破報酬（裁定7）: 満福度・markStageCleared・通常ボスアイテムドロップは一切行わない。
+// ゴールドは呼び出し側(finishBattle)でcalculateSecretBossGoldにより倍率計算済みのものを渡す。
+// fruit_parfait×1確定、20%でrainbow_parfait×1。secretBossDefeated[dexNo] += 1。
+// isCaptureがtrueの場合はsecretBossCaptured[dexNo] += 1も加算する（捕獲時も撃破報酬付与可、裁定7）。
+function applySecretBossDefeatRewards({ isCapture }) {
+  const dexNo = battleState.enemyMaster.dexNo;
+  const state = getState();
+
+  addItem("fruit_parfait", 1);
+  let dropMsg = `<p>🍇 フルーツパフェを てにいれた！</p>`;
+
+  const gotRainbow = rollSecretBossBonusDrop();
+  if (gotRainbow) {
+    addItem("rainbow_parfait", 1);
+    dropMsg += `<p>🌈 虹色パフェを てにいれた！</p>`;
+  }
+
+  state.postGame.secretBossDefeated[dexNo] = (state.postGame.secretBossDefeated[dexNo] || 0) + 1;
+  if (isCapture) {
+    state.postGame.secretBossCaptured[dexNo] = (state.postGame.secretBossCaptured[dexNo] || 0) + 1;
+  }
+
+  return { dropMsg };
 }
 
 // 満福ボーナス（満福度30のボス進化キャラで勝利/捕獲した場合の追加報酬枠）。
@@ -775,6 +858,23 @@ function applyManpukuRewardBonusIfEligible() {
   return `<p>🎁 満福ボーナス！ ごほうび枠が増えた！（${reward.emoji} ${reward.label}）</p>`;
 }
 
+// 熟練度加算に使うステージID。通常ステージ/EXステージで別IDを使う（裁定3・仕様書「ステージ熟練度」節）。
+// 隠しボス戦もexStateの探索中に発生するため、exStage.idで加算する。
+function currentMasteryStageId() {
+  if (battleState.exStage) return battleState.exStage.id;
+  if (battleState.stage) return battleState.stage.id;
+  return null;
+}
+
+// 通常/EXの野生バトル勝利時ゴールド計算。EXステージ中はrewardMultiplierを掛ける（floor）。
+function computeWinGoldGain() {
+  const baseGold = Math.floor(10 + battleState.enemyLevel * 3 + Math.random() * 20);
+  if (battleState.exStage) {
+    return applyExRewardMultiplier(baseGold, battleState.exStage);
+  }
+  return baseGold;
+}
+
 function finishBattle(result, navigate) {
   battleState.isOver = true;
   disableCommands();
@@ -785,22 +885,58 @@ function finishBattle(result, navigate) {
 
   if (result === "win") {
     const expGain = calcExpGain(battleState.enemyMaster, battleState.enemyLevel);
-    const goldGain = Math.floor(10 + battleState.enemyLevel * 3 + Math.random() * 20);
-    addGold(goldGain);
-    const levelUps = gainExp(battleState.playerInstance, expGain);
-
-    // 満福ボーナス判定は「そのボス戦に持ち込んだ時点」の満福度で行う（撃破加算より前に判定）
-    const bonusMsg = applyManpukuRewardBonusIfEligible();
 
     let bossClearedMsg = "";
     let bossDropMsg = "";
     let manpukuMsg = "";
-    if (battleState.isBoss) {
-      const rewards = applyBossDefeatRewards(1);
-      bossClearedMsg = rewards.clearedMsg;
-      bossDropMsg = rewards.dropMsg;
-      manpukuMsg = rewards.manpukuMsg;
+    let bonusMsg = null;
+    let goldGain = 0;
+    let secretDropMsg = "";
+
+    const masteryStageId = currentMasteryStageId();
+    if (masteryStageId) {
+      addStageMastery(getState(), masteryStageId, 1);
     }
+
+    if (battleState.isSecretBoss) {
+      // 裁定7: 隠しボス撃破報酬。満福度・通常ボスドロップ・markStageClearedは一切行わない。
+      const baseGold = Math.floor(10 + battleState.enemyLevel * 3 + Math.random() * 20);
+      goldGain = calculateSecretBossGold(baseGold, battleState.exStage);
+      addGold(goldGain);
+      const rewards = applySecretBossDefeatRewards({ isCapture: false });
+      secretDropMsg = rewards.dropMsg;
+    } else {
+      goldGain = computeWinGoldGain();
+      addGold(goldGain);
+
+      // 満福ボーナス判定は「そのボス戦に持ち込んだ時点」の満福度で行う（撃破加算より前に判定）
+      bonusMsg = applyManpukuRewardBonusIfEligible();
+
+      if (battleState.isBoss && battleState.exStage) {
+        // 裁定2: EXボス（exStage.bossSpeciesId）。exStagesClearedに記録し、clearedStagesは触らない。
+        const rewards = applyExBossDefeatRewards(1);
+        bossClearedMsg = rewards.clearedMsg;
+        bossDropMsg = rewards.dropMsg;
+        manpukuMsg = rewards.manpukuMsg;
+      } else if (battleState.isBoss) {
+        const rewards = applyBossDefeatRewards(1);
+        bossClearedMsg = rewards.clearedMsg;
+        bossDropMsg = rewards.dropMsg;
+        manpukuMsg = rewards.manpukuMsg;
+      } else if (battleState.exStage) {
+        // 裁定6: EX探索の通常敵勝利は25%で追加アイテムドロップ
+        const bonusDrop = rollExBonusDrop();
+        if (bonusDrop) {
+          addItem(bonusDrop.itemId, bonusDrop.amount);
+          const dropItem = getItem(bonusDrop.itemId);
+          const dropName = dropItem ? dropItem.name : bonusDrop.itemId;
+          const dropEmoji = dropItem && dropItem.emoji ? dropItem.emoji : "🎁";
+          bossDropMsg = `<p>${dropEmoji} ${dropName}を てにいれた！</p>`;
+        }
+      }
+    }
+
+    const levelUps = gainExp(battleState.playerInstance, expGain);
 
     // 進化は自動では行わない（仕様: 条件を満たすと育成/ホームで「しんかできる」表示→プレイヤーが実行）
     const evolveHint = canEvolve(battleState.playerInstance)
@@ -817,6 +953,7 @@ function finishBattle(result, navigate) {
       ${evolveHint}
       ${manpukuMsg}
       ${bossDropMsg}
+      ${secretDropMsg}
       ${bossClearedMsg}
       ${bonusMsg || ""}
       <button class="btn btn-block" id="battle-continue-btn">つづける</button>
@@ -831,23 +968,48 @@ function finishBattle(result, navigate) {
   } else if (result === "capture") {
     const wentToBox = getState().party.length >= 3;
 
-    // 満福ボーナス判定は「そのボス戦に持ち込んだ時点」の満福度で行う（撃破加算より前に判定）
-    const bonusMsg = battleState.isBoss ? applyManpukuRewardBonusIfEligible() : null;
-
+    let bonusMsg = null;
     let bossClearedMsg = "";
     let bossDropMsg = "";
     let manpukuMsg = "";
     let bondMsg = "";
-    if (battleState.isBoss) {
-      // 裁定2: ボスを捕獲で倒した場合も撃破処理を行う（撃破+1、捕獲成功ボーナス+4 = 合計+5）
-      const rewards = applyBossDefeatRewards(5);
-      bossClearedMsg = rewards.clearedMsg;
-      bossDropMsg = rewards.dropMsg;
-      manpukuMsg =
-        rewards.manpukuAfter >= MANPUKU_MAX
-          ? `<p>🍡 満福度が +5 あがった！ 満福MAX！</p>`
-          : `<p>🍡 満福度が +5 あがった！（${rewards.manpukuAfter} / ${MANPUKU_MAX}）</p>`;
+    let secretDropMsg = "";
+
+    const masteryStageId = currentMasteryStageId();
+    if (masteryStageId) {
+      addStageMastery(getState(), masteryStageId, 1);
+    }
+
+    if (battleState.isSecretBoss) {
+      // 裁定7: 捕獲成功時もsecretBossCaptured加算 + 撃破報酬付与。満福度は一切変動しない。
+      const rewards = applySecretBossDefeatRewards({ isCapture: true });
+      secretDropMsg = rewards.dropMsg;
       bondMsg = `<p>${battleState.enemyMaster.name}との 縁が深まった！</p>`;
+    } else {
+      // 満福ボーナス判定は「そのボス戦に持ち込んだ時点」の満福度で行う（撃破加算より前に判定）
+      bonusMsg = battleState.isBoss ? applyManpukuRewardBonusIfEligible() : null;
+
+      if (battleState.isBoss && battleState.exStage) {
+        // 裁定2: EXボス捕獲も通常ボスと同様に満福度+5・アイテムドロップを発動する
+        const rewards = applyExBossDefeatRewards(5);
+        bossClearedMsg = rewards.clearedMsg;
+        bossDropMsg = rewards.dropMsg;
+        manpukuMsg =
+          rewards.manpukuAfter >= MANPUKU_MAX
+            ? `<p>🍡 満福度が +5 あがった！ 満福MAX！</p>`
+            : `<p>🍡 満福度が +5 あがった！（${rewards.manpukuAfter} / ${MANPUKU_MAX}）</p>`;
+        bondMsg = `<p>${battleState.enemyMaster.name}との 縁が深まった！</p>`;
+      } else if (battleState.isBoss) {
+        // 裁定2: ボスを捕獲で倒した場合も撃破処理を行う（撃破+1、捕獲成功ボーナス+4 = 合計+5）
+        const rewards = applyBossDefeatRewards(5);
+        bossClearedMsg = rewards.clearedMsg;
+        bossDropMsg = rewards.dropMsg;
+        manpukuMsg =
+          rewards.manpukuAfter >= MANPUKU_MAX
+            ? `<p>🍡 満福度が +5 あがった！ 満福MAX！</p>`
+            : `<p>🍡 満福度が +5 あがった！（${rewards.manpukuAfter} / ${MANPUKU_MAX}）</p>`;
+        bondMsg = `<p>${battleState.enemyMaster.name}との 縁が深まった！</p>`;
+      }
     }
 
     addMonsterToPartyOrBox(battleState.enemyMaster.speciesId, battleState.enemyLevel);
@@ -861,6 +1023,7 @@ function finishBattle(result, navigate) {
       ${bondMsg}
       ${manpukuMsg}
       ${bossDropMsg}
+      ${secretDropMsg}
       ${bossClearedMsg}
       ${bonusMsg || ""}
       <button class="btn btn-block" id="battle-continue-btn">つづける</button>

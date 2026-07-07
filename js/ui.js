@@ -99,6 +99,9 @@ export function rarityLabel(rarity) {
     XL: "スーパーレア",
     XXL: "ウルトラレア",
     LEGEND: "レジェンド",
+    // TODO: 隠しボス用レア度ラベルは仮置き（チャッピー承認待ち）
+    SECRET: "シークレット",
+    SECRET_LEGEND: "ひみつのレジェンド",
   };
   return map[rarity] || rarity;
 }
