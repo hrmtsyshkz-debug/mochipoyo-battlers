@@ -1012,7 +1012,7 @@ export const species = [
     evolvesFrom: null,
     evolvesTo: null,
     evolveCondition: null,
-    images: { icon: null, full: 'assets/monsters/full/031_tsukimi_mochika.png' },
+    images: { icon: 'assets/monsters/icon/031_tsukimi_mochika.png', full: 'assets/monsters/full/031_tsukimi_mochika.png' },
   },
   {
     speciesId: 32,
@@ -1045,7 +1045,7 @@ export const species = [
     evolvesFrom: null,
     evolvesTo: null,
     evolveCondition: null,
-    images: { icon: null, full: 'assets/monsters/full/032_night_parferia.png' },
+    images: { icon: 'assets/monsters/icon/032_night_parferia.png', full: 'assets/monsters/full/032_night_parferia.png' },
   },
   {
     speciesId: 33,
@@ -1078,7 +1078,7 @@ export const species = [
     evolvesFrom: null,
     evolvesTo: null,
     evolveCondition: null,
-    images: { icon: null, full: 'assets/monsters/full/033_juujuria.png' },
+    images: { icon: 'assets/monsters/icon/033_juujuria.png', full: 'assets/monsters/full/033_juujuria.png' },
   },
   {
     speciesId: 34,
